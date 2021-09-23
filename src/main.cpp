@@ -1,52 +1,49 @@
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
+#include "glad/glad.h"
+#include "GLFW/glfw3.h"
 #include <iostream>
+#include <cmath>
+
+#include "Engine/shader.hpp"
+#include "Engine/mesh.hpp"
 
 const unsigned short windowWidth = 800;
 const unsigned short windowHeight = 600;
 
+void frambuffer_size_callback(GLFWwindow* window, int width, int height);
+void processInput(GLFWwindow* window);
+
 /* Vertices */
-float vertices[] = {
-    -0.5f, -0.5f, 0.0f,
-     0.5f, -0.5f, 0.0f,
-     0.0f,  0.5f, 0.0f
+float triangleVertices[] = {
+    // Postitions         // Colors             // Texture Coords
+    -0.5f, -0.5f,  0.0f,   1.0f,  0.0f,  0.0f,   0.0f, 0.0f,  // Bottom Left
+     0.5f, -0.5f,  0.0f,   0.0f,  1.0f,  0.0f,   1.0f, 0.0f,  // Bottom Right
+     0.0f,  0.5f,  0.0f,   0.0f,  0.0f,  1.0f,   0.5f, 1.0f   // Top 
 };
 
-/* Shaders */
-const char* vertexShaderSource = "#version 330 core\n"
-                                 "layout (location = 0) in vec3 aPos;\n"
-                                 "void main()\n"
-                                 "{\n"
-                                 " gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-                                 "}\0";
+float squareVertices[] = {
+    // Positions          // Colors            // Texture Coords
+    -0.5f,  0.5f,  0.0f,   1.0f,  0.0f,  0.0f,  0.0f, 1.0f,  // Top Left
+    -0.5f, -0.5f,  0.0f,   0.0f,  1.0f,  0.0f,  0.0f, 0.0f,  // Bottom Left
+     0.5f, -0.5f,  0.0f,   0.0f,  0.0f,  1.0f,  1.0f, 0.0f,  // Bottom Right
+     0.5f,  0.5f,  0.0f,   0.0f,  1.0f,  1.0f,  1.0f, 1.0f   // Top Right
+};
 
-const char* fragmentShaderSource = "#version 330 core\n"
-                                   "out vec4 FragColor;\n"
-                                   "void main()\n"
-                                   "{\n"
-                                   " FragColor = vec4(0.4f, 0.4f, 0.4f, 1.0f);\n"
-                                   "}\0";
+unsigned int triangleIndices[] = {
+    0, 1, 2,
+};
 
-void frambuffer_size_callback(GLFWwindow* window, int width, int height)
-{
-    glViewport(0, 0, width, height);
-}
-
-void processInput(GLFWwindow* window)
-{
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-    {
-        glfwSetWindowShouldClose(window, true);
-    }
-}
+unsigned int squareIndices[] = {
+    0, 1, 2,
+    2, 3, 0
+};
 
 int main(void)
 {
     /* Initialize the library */
     if (!glfwInit())
         return -1;
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     /* Create a windowed mode window and its OpenGL context */
@@ -68,45 +65,24 @@ int main(void)
         return -1;
     }
 
+    /* Enable polygon culling */
+    glEnable(GL_CULL_FACE);
+
     /* Set Viewport */
     glViewport(0, 0, windowWidth, windowHeight);
     glfwSetFramebufferSizeCallback(window, frambuffer_size_callback); // Change viewport when window is resized
-
-    /* Create VBO */    
-    unsigned int VBO;
-    glGenBuffers(1, &VBO);
     
     /* Initialize Shaders */
-    unsigned int vertexShader;
-    vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-    glCompileShader(vertexShader);
+    Shader basicShader("./shaders/shader.vert", "./shaders/shader.frag");
 
-    unsigned int fragmentShader;
-    fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-    glCompileShader(fragmentShader);
+    Mesh square(squareVertices, sizeof(squareVertices), squareIndices, sizeof(squareIndices), &basicShader);
+    square.addTextureUnit("./textures/bricks.jpg");
+    square.addTextureUnit("./textures/blastoise.png", GL_RGBA);
 
-    /* Initialize Shader Program */
-    unsigned int shaderProgram;
-    shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
-    // Delete linked Shader Objects
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
-
-    /* Create VAO */
-    unsigned int VAO;
-    glGenVertexArrays(1, &VAO);
-    glBindVertexArray(VAO);
-    // Copy vertices array to VBO
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-    // Set the vertex attributes pointers
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
+    // Set samplers to the corresponding texture unit
+    basicShader.use();
+    glUniform1i(glGetUniformLocation(basicShader.getID(), "tex1"), 0);
+    glUniform1i(glGetUniformLocation(basicShader.getID(), "tex2"), 1);
 
     /* Loop until the user closes the window - Render Loop */
     while (!glfwWindowShouldClose(window))
@@ -119,10 +95,7 @@ int main(void)
         glClear(GL_COLOR_BUFFER_BIT);
 
         /* Draw Objects */
-        // Use Shader Program
-        glUseProgram(shaderProgram);
-        glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        square.draw();
 
         /* Poll for and process events */
         glfwPollEvents();
@@ -132,4 +105,17 @@ int main(void)
 
     glfwTerminate();
     return 0;
+}
+
+void frambuffer_size_callback(GLFWwindow* window, int width, int height)
+{
+    glViewport(0, 0, width, height);
+}
+
+void processInput(GLFWwindow* window)
+{
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+    {
+        glfwSetWindowShouldClose(window, true);
+    }
 }
