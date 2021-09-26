@@ -1,5 +1,9 @@
-#include "glad/glad.h"
-#include "GLFW/glfw3.h"
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 #include <iostream>
 #include <cmath>
 
@@ -28,6 +32,45 @@ float squareVertices[] = {
      0.5f,  0.5f,  0.0f,   0.0f,  1.0f,  1.0f,  1.0f, 1.0f   // Top Right
 };
 
+float cubeVertices[] = {
+    /* Front Face */
+    // Positions          // Colors            // Texture Coords
+    -0.5f,  0.5f,  0.5f,   1.0f,  0.0f,  0.0f,  0.0f, 1.0f,  // Front Top Left
+    -0.5f, -0.5f,  0.5f,   0.0f,  1.0f,  0.0f,  0.0f, 0.0f,  // Front Bottom Left
+     0.5f, -0.5f,  0.5f,   0.0f,  0.0f,  1.0f,  1.0f, 0.0f,  // Front Bottom Right
+     0.5f,  0.5f,  0.5f,   0.0f,  1.0f,  1.0f,  1.0f, 1.0f,  // Front Top Right
+    /* Back Face */
+    // Positions          // Colors            // Texture Coords
+     0.5f,  0.5f, -0.5f,   0.0f,  1.0f,  1.0f,  1.0f, 1.0f,  // Back Top Left
+     0.5f, -0.5f, -0.5f,   0.0f,  0.0f,  1.0f,  1.0f, 0.0f,  // Back Bottom Left
+    -0.5f, -0.5f, -0.5f,   0.0f,  1.0f,  0.0f,  0.0f, 0.0f,  // Back Bottom Right
+    -0.5f,  0.5f, -0.5f,   1.0f,  0.0f,  0.0f,  0.0f, 1.0f,  // Back Top Right
+    /* Top Face */
+    // Positions          // Colors            // Texture Coords
+    -0.5f,  0.5f, -0.5f,   1.0f,  0.0f,  0.0f,  0.0f, 1.0f,  // Top Left
+    -0.5f,  0.5f,  0.5f,   0.0f,  1.0f,  0.0f,  0.0f, 0.0f,  // Bottom Left
+     0.5f,  0.5f,  0.5f,   0.0f,  0.0f,  1.0f,  1.0f, 0.0f,  // Bottom Right
+     0.5f,  0.5f, -0.5f,   0.0f,  1.0f,  1.0f,  1.0f, 1.0f,  // Top Right
+    /* Bottom Face */
+    // Positions          // Colors            // Texture Coords
+     0.5f, -0.5f, -0.5f,   1.0f,  0.0f,  0.0f,  0.0f, 1.0f,  // Top Left
+     0.5f, -0.5f,  0.5f,   0.0f,  1.0f,  0.0f,  0.0f, 0.0f,  // Bottom Left
+    -0.5f, -0.5f,  0.5f,   0.0f,  0.0f,  1.0f,  1.0f, 0.0f,  // Bottom Right
+    -0.5f, -0.5f, -0.5f,   0.0f,  1.0f,  1.0f,  1.0f, 1.0f,  // Top Right
+    /* Left Face */
+    // Positions          // Colors            // Texture Coords
+    -0.5f,  0.5f, -0.5f,   1.0f,  0.0f,  0.0f,  0.0f, 1.0f,  // Top Left
+    -0.5f, -0.5f, -0.5f,   0.0f,  1.0f,  0.0f,  0.0f, 0.0f,  // Bottom Left
+    -0.5f, -0.5f,  0.5f,   0.0f,  0.0f,  1.0f,  1.0f, 0.0f,  // Bottom Right
+    -0.5f,  0.5f,  0.5f,   0.0f,  1.0f,  1.0f,  1.0f, 1.0f,  // Top Right
+    /* Right Face */
+    // Positions          // Colors            // Texture Coords
+     0.5f,  0.5f,  0.5f,   1.0f,  0.0f,  0.0f,  0.0f, 1.0f,  // Top Left
+     0.5f, -0.5f,  0.5f,   0.0f,  1.0f,  0.0f,  0.0f, 0.0f,  // Bottom Left
+     0.5f, -0.5f, -0.5f,   0.0f,  0.0f,  1.0f,  1.0f, 0.0f,  // Bottom Right
+     0.5f,  0.5f, -0.5f,   0.0f,  1.0f,  1.0f,  1.0f, 1.0f,  // Top Right
+};
+
 unsigned int triangleIndices[] = {
     0, 1, 2,
 };
@@ -35,6 +78,27 @@ unsigned int triangleIndices[] = {
 unsigned int squareIndices[] = {
     0, 1, 2,
     2, 3, 0
+};
+
+unsigned int cubeIndices[] = {
+    // Front Face
+     0,  1,  2,
+     2,  3,  0,
+    // Back Face
+     4,  5,  6,
+     6,  7,  4,
+    // Top Face
+     8,  9, 10,
+    10, 11,  8,
+    // Bottom Face
+    12, 13, 14,
+    14, 15, 12,
+    // Left Face
+    16, 17, 18,
+    18, 19, 16,
+    // Right Face
+    20, 21, 22,
+    22, 23, 20,
 };
 
 int main(void)
@@ -65,8 +129,9 @@ int main(void)
         return -1;
     }
 
-    /* Enable polygon culling */
+    /* GL Enable */
     glEnable(GL_CULL_FACE);
+    glEnable(GL_DEPTH_TEST);
 
     /* Set Viewport */
     glViewport(0, 0, windowWidth, windowHeight);
@@ -75,14 +140,30 @@ int main(void)
     /* Initialize Shaders */
     Shader basicShader("./shaders/shader.vert", "./shaders/shader.frag");
 
+    /* Create Objects */
     Mesh square(squareVertices, sizeof(squareVertices), squareIndices, sizeof(squareIndices), &basicShader);
     square.addTextureUnit("./textures/bricks.jpg");
     square.addTextureUnit("./textures/blastoise.png", GL_RGBA);
 
-    // Set samplers to the corresponding texture unit
+    Mesh cube(cubeVertices, sizeof(cubeVertices), cubeIndices, sizeof(cubeIndices), &basicShader);
+    cube.addTextureUnit("./textures/bricks.jpg");
+    cube.addTextureUnit("./textures/blastoise.png", GL_RGBA);
+
+    /* Set samplers to the corresponding texture unit */
     basicShader.use();
     glUniform1i(glGetUniformLocation(basicShader.getID(), "tex1"), 0);
     glUniform1i(glGetUniformLocation(basicShader.getID(), "tex2"), 1);
+
+    /* Transformations */
+    glm::mat4 model = glm::mat4(1.0f);
+    
+    glm::mat4 view = glm::mat4(1.0f);
+    view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+    
+    glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)windowWidth / (float)windowHeight, 0.1f, 100.0f);
+
+    basicShader.setViewMatrix(view, "view");
+    basicShader.setProjectionMatrix(projection, "projection");
 
     /* Loop until the user closes the window - Render Loop */
     while (!glfwWindowShouldClose(window))
@@ -92,10 +173,13 @@ int main(void)
         
         /* Rendering */
         glClearColor(0.1f,0.4f,0.6f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        /* Transformations */
+        model = glm::rotate(model, glm::radians(1.0f), glm::vec3(1.0f, 0.3f, 0.5f));
+        cube.transform(model);
         /* Draw Objects */
-        square.draw();
+        cube.draw();
 
         /* Poll for and process events */
         glfwPollEvents();

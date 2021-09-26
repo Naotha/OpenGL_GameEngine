@@ -2,6 +2,7 @@
 #define SHADER_HPP
 
 #include <glad/glad.h>
+#include <glm/glm.hpp>
 
 #include <string>
 #include <fstream>
@@ -15,11 +16,14 @@ public:
     Shader(const char* vertexPath, const char* fragmentPath);
     // Activates the shader
     void use() const;
+    // Set View and Projection Matrices
+    void setViewMatrix(glm::mat4 &viewMatrix, const std::string &name);
+    void setProjectionMatrix(glm::mat4 &projMatrix, const std::string &name);
     // Getters
     unsigned int getID() const;
 private:
     // The ShaderProgram ID
-    unsigned int ID;
+    unsigned int _ID;
 };
 
 Shader::Shader(const char* vertexPath, const char* fragmentPath)
@@ -92,14 +96,14 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath)
     }
 
     // Shader program
-    ID = glCreateProgram();
-    glAttachShader(ID, vertexShader);
-    glAttachShader(ID, fragmentShader);
-    glLinkProgram(ID);
+    _ID = glCreateProgram();
+    glAttachShader(_ID, vertexShader);
+    glAttachShader(_ID, fragmentShader);
+    glLinkProgram(_ID);
     // Check linking
     if (!success)
     {
-        glGetProgramInfoLog(ID, 512, NULL, infoLogLink);
+        glGetProgramInfoLog(_ID, 512, NULL, infoLogLink);
         std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLogLink << std::endl;
     }
     // Delete linked Shader Objects
@@ -109,12 +113,24 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath)
 
 void Shader::use() const
 {
-    glUseProgram(ID);
+    glUseProgram(_ID);
+}
+
+void Shader::setViewMatrix(glm::mat4 &viewMatrix, const std::string &uniformValue)
+{
+    unsigned int viewLoc = glGetUniformLocation(_ID, uniformValue.c_str());
+    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(viewMatrix));
+}
+
+void Shader::setProjectionMatrix(glm::mat4 &projMatrix, const std::string &uniformValue)
+{
+    unsigned int projectionLoc = glGetUniformLocation(_ID, uniformValue.c_str());
+    glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projMatrix));
 }
 
 unsigned int Shader::getID() const
 {
-    return ID;
+    return _ID;
 }
 
 #endif

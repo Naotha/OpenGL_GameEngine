@@ -2,6 +2,7 @@
 #define MESH_HPP
 
 #include <glad/glad.h>
+#include <glm/glm.hpp>
 #include <iostream>
 
 #include "Engine/shader.hpp"
@@ -19,6 +20,8 @@ public:
 
     void addTextureUnit(const char* texturePath, unsigned int texColorChannels);
     
+    void transform(glm::mat4 &transMatrix);
+
 private:
     unsigned int _VBO;
     unsigned int _EBO;
@@ -29,6 +32,8 @@ private:
     unsigned int* _indices;
     unsigned int _indicesSize;
     Shader* _shader;
+
+    glm::mat4 _transMatrix;
     
     unsigned int _textures[16];
     unsigned int _texUnitCount;
@@ -43,6 +48,8 @@ Mesh::Mesh(float* vertices, unsigned int vertSize, unsigned int* indices, unsign
     _indices = indices;
     _indicesSize = indSize;
     _shader = shader;
+
+    _transMatrix = glm::mat4(1.0f);
 
     _texUnitCount = 0;
     
@@ -120,8 +127,16 @@ void Mesh::addTextureUnit(const char* texturePath, unsigned int texColorChannels
     stbi_image_free(data);
 }
 
+void Mesh::transform(glm::mat4 &transMatrix)
+{
+    _transMatrix = transMatrix;
+}
+
 void Mesh::draw()
 {
+    // Set transform
+    unsigned int transformLoc = glGetUniformLocation(_shader->getID(), "model");
+    glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(_transMatrix));
     // Use Shader Program
     _shader->use();
     // Activate Texture Units
@@ -132,7 +147,7 @@ void Mesh::draw()
     }
     // Draw
     glBindVertexArray(_VAO);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+    glDrawElements(GL_TRIANGLES, _indicesSize, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
 
 }
