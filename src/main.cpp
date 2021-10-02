@@ -6,9 +6,13 @@
 
 #include <iostream>
 #include <cmath>
+#include <vector>
 
 #include "Engine/shader.hpp"
+#include "Engine/texture.hpp"
 #include "Engine/mesh.hpp"
+#include "Engine/vertex.h"
+#include "Engine/camera.hpp"
 
 
 void frambuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -29,78 +33,73 @@ float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
 /* Camera */
-glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
-glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
-float pitch;
-float yaw = -90.0f;
-float fov = 45.0f;
+Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
 
 /* Vertices */
-float triangleVertices[] = {
-    // Postitions         // Colors             // Texture Coords
-    -0.5f, -0.5f,  0.0f,   1.0f,  0.0f,  0.0f,   0.0f, 0.0f,  // Bottom Left
-     0.5f, -0.5f,  0.0f,   0.0f,  1.0f,  0.0f,   1.0f, 0.0f,  // Bottom Right
-     0.0f,  0.5f,  0.0f,   0.0f,  0.0f,  1.0f,   0.5f, 1.0f   // Top 
+std::vector<Vertex> triangleVertices = {
+    // Postitions                      // Colors                        // Texture Coords
+    {glm::vec3(-0.5f, -0.5f,  0.0f),   glm::vec3(1.0f,  0.0f,  0.0f),   glm::vec2(0.0f, 0.0f)},  // Bottom Left
+    {glm::vec3( 0.5f, -0.5f,  0.0f),   glm::vec3(0.0f,  1.0f,  0.0f),   glm::vec2(1.0f, 0.0f)},  // Bottom Right
+    {glm::vec3( 0.0f,  0.5f,  0.0f),   glm::vec3(0.0f,  0.0f,  1.0f),   glm::vec2(0.5f, 1.0f)}   // Top 
 };
 
-float squareVertices[] = {
-    // Positions          // Colors            // Texture Coords
-    -0.5f,  0.5f,  0.0f,   1.0f,  0.0f,  0.0f,  0.0f, 1.0f,  // Top Left
-    -0.5f, -0.5f,  0.0f,   0.0f,  1.0f,  0.0f,  0.0f, 0.0f,  // Bottom Left
-     0.5f, -0.5f,  0.0f,   0.0f,  0.0f,  1.0f,  1.0f, 0.0f,  // Bottom Right
-     0.5f,  0.5f,  0.0f,   0.0f,  1.0f,  1.0f,  1.0f, 1.0f   // Top Right
+std::vector<Vertex> squareVertices = {
+    // Positions                       // Colors                       // Texture Coords
+    {glm::vec3(-0.5f,  0.5f,  0.0f),   glm::vec3(1.0f,  0.0f,  0.0f),   glm::vec2(0.0f, 1.0f)},  // Top Left
+    {glm::vec3(-0.5f, -0.5f,  0.0f),   glm::vec3(0.0f,  1.0f,  0.0f),   glm::vec2(0.0f, 0.0f)},  // Bottom Left
+    {glm::vec3( 0.5f, -0.5f,  0.0f),   glm::vec3(0.0f,  0.0f,  1.0f),   glm::vec2(1.0f, 0.0f)},  // Bottom Right
+    {glm::vec3( 0.5f,  0.5f,  0.0f),   glm::vec3(0.0f,  1.0f,  1.0f),   glm::vec2(1.0f, 1.0f)}   // Top Right
 };
 
-float cubeVertices[] = {
+std::vector<Vertex> cubeVertices = {
     /* Front Face */
-    // Positions          // Colors            // Texture Coords
-    -0.5f,  0.5f,  0.5f,   1.0f,  0.0f,  0.0f,  0.0f, 1.0f,  // Front Top Left
-    -0.5f, -0.5f,  0.5f,   0.0f,  1.0f,  0.0f,  0.0f, 0.0f,  // Front Bottom Left
-     0.5f, -0.5f,  0.5f,   0.0f,  0.0f,  1.0f,  1.0f, 0.0f,  // Front Bottom Right
-     0.5f,  0.5f,  0.5f,   0.0f,  1.0f,  1.0f,  1.0f, 1.0f,  // Front Top Right
+    // Positions                       // Colors                       // Texture Coords
+    {glm::vec3(-0.5f,  0.5f,  0.5f),   glm::vec3(1.0f,  0.0f,  0.0f),   glm::vec2(0.0f, 1.0f)},  // Front Top Left
+    {glm::vec3(-0.5f, -0.5f,  0.5f),   glm::vec3(0.0f,  1.0f,  0.0f),   glm::vec2(0.0f, 0.0f)},  // Front Bottom Left
+    {glm::vec3( 0.5f, -0.5f,  0.5f),   glm::vec3(0.0f,  0.0f,  1.0f),   glm::vec2(1.0f, 0.0f)},  // Front Bottom Right
+    {glm::vec3( 0.5f,  0.5f,  0.5f),   glm::vec3(0.0f,  1.0f,  1.0f),   glm::vec2(1.0f, 1.0f)},  // Front Top Right
     /* Back Face */
-    // Positions          // Colors            // Texture Coords
-     0.5f,  0.5f, -0.5f,   0.0f,  1.0f,  1.0f,  1.0f, 1.0f,  // Back Top Left
-     0.5f, -0.5f, -0.5f,   0.0f,  0.0f,  1.0f,  1.0f, 0.0f,  // Back Bottom Left
-    -0.5f, -0.5f, -0.5f,   0.0f,  1.0f,  0.0f,  0.0f, 0.0f,  // Back Bottom Right
-    -0.5f,  0.5f, -0.5f,   1.0f,  0.0f,  0.0f,  0.0f, 1.0f,  // Back Top Right
+    // Positions                       // Colors                        // Texture Coords
+    {glm::vec3( 0.5f,  0.5f, -0.5f),   glm::vec3(0.0f,  1.0f,  1.0f),   glm::vec2(1.0f, 1.0f)},  // Back Top Left
+    {glm::vec3( 0.5f, -0.5f, -0.5f),   glm::vec3(0.0f,  0.0f,  1.0f),   glm::vec2(1.0f, 0.0f)},  // Back Bottom Left
+    {glm::vec3(-0.5f, -0.5f, -0.5f),   glm::vec3(0.0f,  1.0f,  0.0f),   glm::vec2(0.0f, 0.0f)},  // Back Bottom Right
+    {glm::vec3(-0.5f,  0.5f, -0.5f),   glm::vec3(1.0f,  0.0f,  0.0f),   glm::vec2(0.0f, 1.0f)},  // Back Top Right
     /* Top Face */
-    // Positions          // Colors            // Texture Coords
-    -0.5f,  0.5f, -0.5f,   1.0f,  0.0f,  0.0f,  0.0f, 1.0f,  // Top Left
-    -0.5f,  0.5f,  0.5f,   0.0f,  1.0f,  0.0f,  0.0f, 0.0f,  // Bottom Left
-     0.5f,  0.5f,  0.5f,   0.0f,  0.0f,  1.0f,  1.0f, 0.0f,  // Bottom Right
-     0.5f,  0.5f, -0.5f,   0.0f,  1.0f,  1.0f,  1.0f, 1.0f,  // Top Right
+    // Positions                       // Colors                        // Texture Coords
+    {glm::vec3(-0.5f,  0.5f, -0.5f),   glm::vec3(1.0f,  0.0f,  0.0f),   glm::vec2(0.0f, 1.0f)},  // Top Left
+    {glm::vec3(-0.5f,  0.5f,  0.5f),   glm::vec3(0.0f,  1.0f,  0.0f),   glm::vec2(0.0f, 0.0f)},  // Bottom Left
+    {glm::vec3( 0.5f,  0.5f,  0.5f),   glm::vec3(0.0f,  0.0f,  1.0f),   glm::vec2(1.0f, 0.0f)},  // Bottom Right
+    {glm::vec3( 0.5f,  0.5f, -0.5f),   glm::vec3(0.0f,  1.0f,  1.0f),   glm::vec2(1.0f, 1.0f)},  // Top Right
     /* Bottom Face */
-    // Positions          // Colors            // Texture Coords
-     0.5f, -0.5f, -0.5f,   1.0f,  0.0f,  0.0f,  0.0f, 1.0f,  // Top Left
-     0.5f, -0.5f,  0.5f,   0.0f,  1.0f,  0.0f,  0.0f, 0.0f,  // Bottom Left
-    -0.5f, -0.5f,  0.5f,   0.0f,  0.0f,  1.0f,  1.0f, 0.0f,  // Bottom Right
-    -0.5f, -0.5f, -0.5f,   0.0f,  1.0f,  1.0f,  1.0f, 1.0f,  // Top Right
+    // Positions                       // Colors                        // Texture Coords
+    {glm::vec3( 0.5f, -0.5f, -0.5f),   glm::vec3(1.0f,  0.0f,  0.0f),   glm::vec2(0.0f, 1.0f)},  // Top Left
+    {glm::vec3( 0.5f, -0.5f,  0.5f),   glm::vec3(0.0f,  1.0f,  0.0f),   glm::vec2(0.0f, 0.0f)},  // Bottom Left
+    {glm::vec3(-0.5f, -0.5f,  0.5f),   glm::vec3(0.0f,  0.0f,  1.0f),   glm::vec2(1.0f, 0.0f)},  // Bottom Right
+    {glm::vec3(-0.5f, -0.5f, -0.5f),   glm::vec3(0.0f,  1.0f,  1.0f),   glm::vec2(1.0f, 1.0f)},  // Top Right
     /* Left Face */
-    // Positions          // Colors            // Texture Coords
-    -0.5f,  0.5f, -0.5f,   1.0f,  0.0f,  0.0f,  0.0f, 1.0f,  // Top Left
-    -0.5f, -0.5f, -0.5f,   0.0f,  1.0f,  0.0f,  0.0f, 0.0f,  // Bottom Left
-    -0.5f, -0.5f,  0.5f,   0.0f,  0.0f,  1.0f,  1.0f, 0.0f,  // Bottom Right
-    -0.5f,  0.5f,  0.5f,   0.0f,  1.0f,  1.0f,  1.0f, 1.0f,  // Top Right
+    // Positions                       // Colors                        // Texture Coords
+    {glm::vec3(-0.5f,  0.5f, -0.5f),   glm::vec3(1.0f,  0.0f,  0.0f),   glm::vec2(0.0f, 1.0f)},  // Top Left
+    {glm::vec3(-0.5f, -0.5f, -0.5f),   glm::vec3(0.0f,  1.0f,  0.0f),   glm::vec2(0.0f, 0.0f)},  // Bottom Left
+    {glm::vec3(-0.5f, -0.5f,  0.5f),   glm::vec3(0.0f,  0.0f,  1.0f),   glm::vec2(1.0f, 0.0f)},  // Bottom Right
+    {glm::vec3(-0.5f,  0.5f,  0.5f),   glm::vec3(0.0f,  1.0f,  1.0f),   glm::vec2(1.0f, 1.0f)},  // Top Right
     /* Right Face */
-    // Positions          // Colors            // Texture Coords
-     0.5f,  0.5f,  0.5f,   1.0f,  0.0f,  0.0f,  0.0f, 1.0f,  // Top Left
-     0.5f, -0.5f,  0.5f,   0.0f,  1.0f,  0.0f,  0.0f, 0.0f,  // Bottom Left
-     0.5f, -0.5f, -0.5f,   0.0f,  0.0f,  1.0f,  1.0f, 0.0f,  // Bottom Right
-     0.5f,  0.5f, -0.5f,   0.0f,  1.0f,  1.0f,  1.0f, 1.0f,  // Top Right
+    // Positions                       // Colors                        // Texture Coords
+    {glm::vec3( 0.5f,  0.5f,  0.5f),   glm::vec3(1.0f,  0.0f,  0.0f),   glm::vec2(0.0f, 1.0f)},  // Top Left
+    {glm::vec3( 0.5f, -0.5f,  0.5f),   glm::vec3(0.0f,  1.0f,  0.0f),   glm::vec2(0.0f, 0.0f)},  // Bottom Left
+    {glm::vec3( 0.5f, -0.5f, -0.5f),   glm::vec3(0.0f,  0.0f,  1.0f),   glm::vec2(1.0f, 0.0f)},  // Bottom Right
+    {glm::vec3( 0.5f,  0.5f, -0.5f),   glm::vec3(0.0f,  1.0f,  1.0f),   glm::vec2(1.0f, 1.0f)},  // Top Right
 };
 
-unsigned int triangleIndices[] = {
+std::vector<unsigned int> triangleIndices = {
     0, 1, 2,
 };
 
-unsigned int squareIndices[] = {
+std::vector<unsigned int> squareIndices = {
     0, 1, 2,
     2, 3, 0
 };
 
-unsigned int cubeIndices[] = {
+std::vector<unsigned int> cubeIndices = {
     // Front Face
      0,  1,  2,
      2,  3,  0,
@@ -151,6 +150,7 @@ int main(void)
 
     /* GL Enable */
     glEnable(GL_CULL_FACE);
+    glEnable(GL_BLEND);
     glEnable(GL_DEPTH_TEST);
 
     /* Set Viewport */
@@ -164,26 +164,21 @@ int main(void)
     
     /* Initialize Shaders */
     Shader basicShader("./shaders/shader.vert", "./shaders/shader.frag");
-
+    Shader basicShader2("./shaders/shader.vert", "./shaders/shader.frag");
+    
     /* Create Objects */
-    Mesh square(squareVertices, sizeof(squareVertices), squareIndices, sizeof(squareIndices), &basicShader);
-    square.addTextureUnit("./textures/bricks.jpg");
-    square.addTextureUnit("./textures/blastoise.png", GL_RGBA);
+    Texture brickTexture("./textures/bricks.jpg", "u_tex0");
+    Texture blastoiseTexture("./textures/blastoise.png", "u_tex1", GL_RGBA);
+    std::vector<Texture> cubeTextures = {brickTexture, blastoiseTexture};
+    std::vector<Texture> cube2Textures = {brickTexture};
 
-    Mesh cube(cubeVertices, sizeof(cubeVertices), cubeIndices, sizeof(cubeIndices), &basicShader);
-    cube.addTextureUnit("./textures/bricks.jpg");
-    cube.addTextureUnit("./textures/blastoise.png", GL_RGBA);
+    Mesh cube(cubeVertices, cubeIndices, cubeTextures, &basicShader);
 
-    /* Set samplers to the corresponding texture unit */
-    basicShader.use();
-    glUniform1i(glGetUniformLocation(basicShader.getID(), "tex1"), 0);
-    glUniform1i(glGetUniformLocation(basicShader.getID(), "tex2"), 1);
+    Mesh cube2(cubeVertices, cubeIndices, &basicShader2);
+    cube2.setTextures(cube2Textures);
 
     /* Transformation Matrices */
     glm::mat4 model = glm::mat4(1.0f);
-    glm::mat4 view = glm::lookAt(glm::vec3(0.0f, 0.0f, 3.0f),
-                                 glm::vec3(0.0f, 0.0f, 0.0f),
-                                 glm::vec3(0.0f, 1.0f, 0.0f));
 
     /* Loop until the user closes the window - Render Loop */
     while (!glfwWindowShouldClose(window))
@@ -192,19 +187,38 @@ int main(void)
         processInput(window);
         
         /* Camera Calculations */
-        glm::mat4 projection = glm::perspective(glm::radians(fov), (float)windowWidth / (float)windowHeight, 0.1f, 100.0f);
-        basicShader.setProjectionMatrix(projection, "projection");
-        glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
-        basicShader.setViewMatrix(view, "view");
+        glm::mat4 projection = glm::perspective(glm::radians(camera.getFOV()),
+                                                (float)windowWidth / (float)windowHeight,
+                                                0.1f, 100.0f);
+        glm::mat4 view = camera.getViewMatrix();
+        glm::mat4 mvp = projection * view * model;
+
         /* Rendering */
         glClearColor(0.1f,0.4f,0.6f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        /* Transformations */
-        // model = glm::rotate(model, glm::radians(1.0f), glm::vec3(1.0f, 0.3f, 0.5f));
-        // cube.transform(model);
         /* Draw Objects */
-        cube.draw();
+        for (int i = 0; i < 10; i++)
+        {   
+            basicShader.use();
+            glm::mat4 model_i = glm::translate(model, glm::vec3(0.0f, 0.0f, -1.0f * i));
+            glm::mat4 mvp = projection * view * model_i;
+
+            basicShader.setUniformMat4("u_mvp", mvp);
+            
+            cube.draw();
+        }
+        
+        for (int i = 0; i < 10; i++)
+        {
+            basicShader2.use();
+            glm::mat4 model_i = glm::translate(model, glm::vec3(0.0f, 2.0f, -1.0f * i));
+            glm::mat4 mvp = projection * view * model_i;
+
+            basicShader2.setUniformMat4("u_mvp", mvp);
+            
+            cube2.draw();
+        }
 
         /* Poll for and process events */
         glfwPollEvents();
@@ -225,20 +239,17 @@ void frambuffer_size_callback(GLFWwindow* window, int width, int height)
 
 void processInput(GLFWwindow* window)
 {
-    const float cameraSpeed = 2.5f * deltaTime;
-    glm::vec3 cameraRight = glm::normalize(glm::cross(cameraFront, cameraUp));
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        cameraPos += cameraSpeed * cameraFront;
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        cameraPos -= cameraSpeed * cameraFront;
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        cameraPos -= cameraRight * cameraSpeed;
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        cameraPos += cameraRight * cameraSpeed;
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-    {
         glfwSetWindowShouldClose(window, true);
-    }
+
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        camera.processKeyboard(FORWARD, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        camera.processKeyboard(BACKWARD, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        camera.processKeyboard(LEFT, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        camera.processKeyboard(RIGHT, deltaTime);
 }
 
 void mouse_callback(GLFWwindow* window, double xpos, double ypos)
@@ -257,33 +268,12 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
     lastX = xpos;
     lastY = ypos;
 
-    const float sensitivity = 0.1f;
-    xOffset *= sensitivity;
-    yOffset *= sensitivity;
-
-    // Set Yaw and Pitch
-    yaw += xOffset;
-    pitch += yOffset;
-    if (pitch > 89.0f)
-        pitch = 89.0f;
-    if (pitch < -89.0f)
-        pitch = -89.0f;
-    
-    // Calculate camera direction
-    glm::vec3 direction;
-    direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-    direction.y = sin(glm::radians(pitch));
-    direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-    cameraFront = glm::normalize(direction);
+    camera.processMouseMovement(xOffset, yOffset);
 }
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
-    fov -= (float)yoffset;
-    if (fov < 1.0f)
-        fov = 1.0f;
-    if (fov > 45.0f)
-        fov = 45.0f;
+    camera.processMouseScroll(yoffset);
 }
 
 void calculateDeltaTime()
