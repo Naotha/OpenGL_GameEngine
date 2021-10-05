@@ -3,6 +3,9 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <ImGui/imgui.h>
+#include <ImGui/backends/imgui_impl_glfw.h>
+#include <ImGui/backends/imgui_impl_opengl3.h>
 
 #include <iostream>
 #include <vector>
@@ -122,6 +125,7 @@ std::vector<unsigned int> cubeIndices = {
 
 int main(void)
 {
+    /// SETUP GLFW
     /* Initialize the library */
     if (!glfwInit())
         return -1;
@@ -140,7 +144,20 @@ int main(void)
 
     /* Make the window's context current */
     glfwMakeContextCurrent(window);
+
+    /// SETUP IMGUI
+    // Setup Dear ImGui context
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO &io = ImGui::GetIO();
+    // Setup Platform/Renderer bindings
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init();
+    // Setup Dear ImGui style
+    ImGui::StyleColorsDark();
     
+
+    /// SETUP OPENGL
     /* Initialize GLAD */
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
@@ -218,6 +235,17 @@ int main(void)
             
             cube2.draw();
         }
+
+        /* ImGUI */
+        // feed inputs to dear imgui, start new frame
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+        ImGui::Begin("Demo window");
+        ImGui::End();
+
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
         /* Poll for and process events */
         glfwPollEvents();
