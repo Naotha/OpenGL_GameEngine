@@ -5,7 +5,6 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include <iostream>
-#include <cmath>
 #include <vector>
 
 #include "Engine/shader.hpp"
@@ -22,11 +21,12 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void calculateDeltaTime();
 
 /* Window, cursor */
-const unsigned short windowWidth = 800;
-const unsigned short windowHeight = 600;
+unsigned short windowWidth = 800;
+unsigned short windowHeight = 600;
 float lastX = windowWidth / 2;
 float lastY = windowHeight / 2;
 bool firstMouse = true;
+bool cameraMode = false;
 
 /* Time */
 float deltaTime = 0.0f;
@@ -130,7 +130,7 @@ int main(void)
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     /* Create a windowed mode window and its OpenGL context */
-    GLFWwindow* window = glfwCreateWindow(windowWidth, windowHeight, "Hello World", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(windowWidth, windowHeight, "OpenGL Engine", NULL, NULL);
     if (!window)
     {
         std::cout << "Failed to create GLFW window" << std::endl;
@@ -140,7 +140,7 @@ int main(void)
 
     /* Make the window's context current */
     glfwMakeContextCurrent(window);
-
+    
     /* Initialize GLAD */
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
@@ -157,8 +157,7 @@ int main(void)
     glViewport(0, 0, windowWidth, windowHeight);
     glfwSetFramebufferSizeCallback(window, frambuffer_size_callback); // Change viewport when window is resized
     
-    /* Set Cursor mode */
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    /* Set Mouse callbacks */
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetScrollCallback(window, scroll_callback);
     
@@ -234,6 +233,8 @@ int main(void)
 
 void frambuffer_size_callback(GLFWwindow* window, int width, int height)
 {
+    windowWidth = width;
+    windowHeight = height;
     glViewport(0, 0, width, height);
 }
 
@@ -242,33 +243,52 @@ void processInput(GLFWwindow* window)
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        camera.processKeyboard(FORWARD, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        camera.processKeyboard(BACKWARD, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        camera.processKeyboard(LEFT, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        camera.processKeyboard(RIGHT, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_LEFT_ALT) == GLFW_RELEASE)
+    {
+        cameraMode = false;
+        firstMouse = true;
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    }
+    
+    if (glfwGetKey(window, GLFW_KEY_LEFT_ALT) == GLFW_PRESS)
+    {   
+        if (cameraMode == false)
+        {
+            cameraMode = true;
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        }
+
+        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+            camera.processKeyboard(FORWARD, deltaTime);
+        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+            camera.processKeyboard(BACKWARD, deltaTime);
+        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+            camera.processKeyboard(LEFT, deltaTime);
+        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+            camera.processKeyboard(RIGHT, deltaTime);
+    }
 }
 
 void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 {   
-    // Circumvent sudden jump on focus gain
-    if (firstMouse)
+    if (cameraMode)
     {
+        // Circumvent sudden jump on focus gain
+        if (firstMouse)
+        {
+            lastX = xpos;
+            lastY = ypos;
+            firstMouse = false;
+        }
+
+        // Calculate mouse offset
+        float xOffset = xpos - lastX;
+        float yOffset = lastY - ypos;
         lastX = xpos;
         lastY = ypos;
-        firstMouse = false;
+
+        camera.processMouseMovement(xOffset, yOffset);
     }
-
-    // Calculate mouse offset
-    float xOffset = xpos - lastX;
-    float yOffset = lastY - ypos;
-    lastX = xpos;
-    lastY = ypos;
-
-    camera.processMouseMovement(xOffset, yOffset);
 }
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
