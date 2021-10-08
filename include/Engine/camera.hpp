@@ -56,7 +56,7 @@ Camera::Camera(glm::vec3 position, glm::vec3 worldUp = glm::vec3(0.0f, 1.0f, 0.0
 
     this->movementSpeed = movementSpeed;
     this->mouseSensitivity = mouseSensitivity;
-    fov = fov;
+    this->fov = fov;
 
     _updateCameraVectors();
 }
