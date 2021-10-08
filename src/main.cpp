@@ -56,41 +56,41 @@ std::vector<Vertex> squareVertices = {
 
 std::vector<Vertex> cubeVertices = {
     /* Front Face */
-    // Positions                       // Colors                       // Texture Coords
-    {glm::vec3(-0.5f,  0.5f,  0.5f),   glm::vec3(1.0f,  0.0f,  0.0f),   glm::vec2(0.0f, 1.0f)},  // Front Top Left
-    {glm::vec3(-0.5f, -0.5f,  0.5f),   glm::vec3(0.0f,  1.0f,  0.0f),   glm::vec2(0.0f, 0.0f)},  // Front Bottom Left
-    {glm::vec3( 0.5f, -0.5f,  0.5f),   glm::vec3(0.0f,  0.0f,  1.0f),   glm::vec2(1.0f, 0.0f)},  // Front Bottom Right
-    {glm::vec3( 0.5f,  0.5f,  0.5f),   glm::vec3(0.0f,  1.0f,  1.0f),   glm::vec2(1.0f, 1.0f)},  // Front Top Right
+    // Positions                       // Normals                       // Texture Coords
+    {glm::vec3(-0.5f,  0.5f,  0.5f),   glm::vec3( 0.0f,  0.0f,  1.0f),   glm::vec2(0.0f, 1.0f)},  // Front Top Left
+    {glm::vec3(-0.5f, -0.5f,  0.5f),   glm::vec3( 0.0f,  0.0f,  1.0f),   glm::vec2(0.0f, 0.0f)},  // Front Bottom Left
+    {glm::vec3( 0.5f, -0.5f,  0.5f),   glm::vec3( 0.0f,  0.0f,  1.0f),   glm::vec2(1.0f, 0.0f)},  // Front Bottom Right
+    {glm::vec3( 0.5f,  0.5f,  0.5f),   glm::vec3( 0.0f,  0.0f,  1.0f),   glm::vec2(1.0f, 1.0f)},  // Front Top Right
     /* Back Face */
-    // Positions                       // Colors                        // Texture Coords
-    {glm::vec3( 0.5f,  0.5f, -0.5f),   glm::vec3(0.0f,  1.0f,  1.0f),   glm::vec2(1.0f, 1.0f)},  // Back Top Left
-    {glm::vec3( 0.5f, -0.5f, -0.5f),   glm::vec3(0.0f,  0.0f,  1.0f),   glm::vec2(1.0f, 0.0f)},  // Back Bottom Left
-    {glm::vec3(-0.5f, -0.5f, -0.5f),   glm::vec3(0.0f,  1.0f,  0.0f),   glm::vec2(0.0f, 0.0f)},  // Back Bottom Right
-    {glm::vec3(-0.5f,  0.5f, -0.5f),   glm::vec3(1.0f,  0.0f,  0.0f),   glm::vec2(0.0f, 1.0f)},  // Back Top Right
+    // Positions                       // Normals                        // Texture Coords
+    {glm::vec3( 0.5f,  0.5f, -0.5f),   glm::vec3( 0.0f,  0.0f, -1.0f),   glm::vec2(1.0f, 1.0f)},  // Back Top Left
+    {glm::vec3( 0.5f, -0.5f, -0.5f),   glm::vec3( 0.0f,  0.0f, -1.0f),   glm::vec2(1.0f, 0.0f)},  // Back Bottom Left
+    {glm::vec3(-0.5f, -0.5f, -0.5f),   glm::vec3( 0.0f,  0.0f, -1.0f),   glm::vec2(0.0f, 0.0f)},  // Back Bottom Right
+    {glm::vec3(-0.5f,  0.5f, -0.5f),   glm::vec3( 0.0f,  0.0f, -1.0f),   glm::vec2(0.0f, 1.0f)},  // Back Top Right
     /* Top Face */
-    // Positions                       // Colors                        // Texture Coords
-    {glm::vec3(-0.5f,  0.5f, -0.5f),   glm::vec3(1.0f,  0.0f,  0.0f),   glm::vec2(0.0f, 1.0f)},  // Top Left
-    {glm::vec3(-0.5f,  0.5f,  0.5f),   glm::vec3(0.0f,  1.0f,  0.0f),   glm::vec2(0.0f, 0.0f)},  // Bottom Left
-    {glm::vec3( 0.5f,  0.5f,  0.5f),   glm::vec3(0.0f,  0.0f,  1.0f),   glm::vec2(1.0f, 0.0f)},  // Bottom Right
-    {glm::vec3( 0.5f,  0.5f, -0.5f),   glm::vec3(0.0f,  1.0f,  1.0f),   glm::vec2(1.0f, 1.0f)},  // Top Right
+    // Positions                       // Normals                        // Texture Coords
+    {glm::vec3(-0.5f,  0.5f, -0.5f),   glm::vec3( 0.0f,  1.0f,  0.0f),   glm::vec2(0.0f, 1.0f)},  // Top Left
+    {glm::vec3(-0.5f,  0.5f,  0.5f),   glm::vec3( 0.0f,  1.0f,  0.0f),   glm::vec2(0.0f, 0.0f)},  // Bottom Left
+    {glm::vec3( 0.5f,  0.5f,  0.5f),   glm::vec3( 0.0f,  1.0f,  0.0f),   glm::vec2(1.0f, 0.0f)},  // Bottom Right
+    {glm::vec3( 0.5f,  0.5f, -0.5f),   glm::vec3( 0.0f,  1.0f,  0.0f),   glm::vec2(1.0f, 1.0f)},  // Top Right
     /* Bottom Face */
-    // Positions                       // Colors                        // Texture Coords
-    {glm::vec3( 0.5f, -0.5f, -0.5f),   glm::vec3(1.0f,  0.0f,  0.0f),   glm::vec2(0.0f, 1.0f)},  // Top Left
-    {glm::vec3( 0.5f, -0.5f,  0.5f),   glm::vec3(0.0f,  1.0f,  0.0f),   glm::vec2(0.0f, 0.0f)},  // Bottom Left
-    {glm::vec3(-0.5f, -0.5f,  0.5f),   glm::vec3(0.0f,  0.0f,  1.0f),   glm::vec2(1.0f, 0.0f)},  // Bottom Right
-    {glm::vec3(-0.5f, -0.5f, -0.5f),   glm::vec3(0.0f,  1.0f,  1.0f),   glm::vec2(1.0f, 1.0f)},  // Top Right
+    // Positions                       // Normals                        // Texture Coords
+    {glm::vec3( 0.5f, -0.5f, -0.5f),   glm::vec3( 0.0f, -1.0f,  0.0f),   glm::vec2(0.0f, 1.0f)},  // Top Left
+    {glm::vec3( 0.5f, -0.5f,  0.5f),   glm::vec3( 0.0f, -1.0f,  0.0f),   glm::vec2(0.0f, 0.0f)},  // Bottom Left
+    {glm::vec3(-0.5f, -0.5f,  0.5f),   glm::vec3( 0.0f, -1.0f,  0.0f),   glm::vec2(1.0f, 0.0f)},  // Bottom Right
+    {glm::vec3(-0.5f, -0.5f, -0.5f),   glm::vec3( 0.0f, -1.0f,  0.0f),   glm::vec2(1.0f, 1.0f)},  // Top Right
     /* Left Face */
-    // Positions                       // Colors                        // Texture Coords
-    {glm::vec3(-0.5f,  0.5f, -0.5f),   glm::vec3(1.0f,  0.0f,  0.0f),   glm::vec2(0.0f, 1.0f)},  // Top Left
-    {glm::vec3(-0.5f, -0.5f, -0.5f),   glm::vec3(0.0f,  1.0f,  0.0f),   glm::vec2(0.0f, 0.0f)},  // Bottom Left
-    {glm::vec3(-0.5f, -0.5f,  0.5f),   glm::vec3(0.0f,  0.0f,  1.0f),   glm::vec2(1.0f, 0.0f)},  // Bottom Right
-    {glm::vec3(-0.5f,  0.5f,  0.5f),   glm::vec3(0.0f,  1.0f,  1.0f),   glm::vec2(1.0f, 1.0f)},  // Top Right
+    // Positions                       // Normals                        // Texture Coords
+    {glm::vec3(-0.5f,  0.5f, -0.5f),   glm::vec3(-1.0f,  0.0f,  0.0f),   glm::vec2(0.0f, 1.0f)},  // Top Left
+    {glm::vec3(-0.5f, -0.5f, -0.5f),   glm::vec3(-1.0f,  0.0f,  0.0f),   glm::vec2(0.0f, 0.0f)},  // Bottom Left
+    {glm::vec3(-0.5f, -0.5f,  0.5f),   glm::vec3(-1.0f,  0.0f,  0.0f),   glm::vec2(1.0f, 0.0f)},  // Bottom Right
+    {glm::vec3(-0.5f,  0.5f,  0.5f),   glm::vec3(-1.0f,  0.0f,  0.0f),   glm::vec2(1.0f, 1.0f)},  // Top Right
     /* Right Face */
-    // Positions                       // Colors                        // Texture Coords
-    {glm::vec3( 0.5f,  0.5f,  0.5f),   glm::vec3(1.0f,  0.0f,  0.0f),   glm::vec2(0.0f, 1.0f)},  // Top Left
-    {glm::vec3( 0.5f, -0.5f,  0.5f),   glm::vec3(0.0f,  1.0f,  0.0f),   glm::vec2(0.0f, 0.0f)},  // Bottom Left
-    {glm::vec3( 0.5f, -0.5f, -0.5f),   glm::vec3(0.0f,  0.0f,  1.0f),   glm::vec2(1.0f, 0.0f)},  // Bottom Right
-    {glm::vec3( 0.5f,  0.5f, -0.5f),   glm::vec3(0.0f,  1.0f,  1.0f),   glm::vec2(1.0f, 1.0f)},  // Top Right
+    // Positions                       // Normals                        // Texture Coords
+    {glm::vec3( 0.5f,  0.5f,  0.5f),   glm::vec3( 1.0f,  0.0f,  0.0f),   glm::vec2(0.0f, 1.0f)},  // Top Left
+    {glm::vec3( 0.5f, -0.5f,  0.5f),   glm::vec3( 1.0f,  0.0f,  0.0f),   glm::vec2(0.0f, 0.0f)},  // Bottom Left
+    {glm::vec3( 0.5f, -0.5f, -0.5f),   glm::vec3( 1.0f,  0.0f,  0.0f),   glm::vec2(1.0f, 0.0f)},  // Bottom Right
+    {glm::vec3( 0.5f,  0.5f, -0.5f),   glm::vec3( 1.0f,  0.0f,  0.0f),   glm::vec2(1.0f, 1.0f)},  // Top Right
 };
 
 std::vector<unsigned int> triangleIndices = {
@@ -147,14 +147,14 @@ int main(void)
 
     /// SETUP IMGUI
     // Setup Dear ImGui context
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO &io = ImGui::GetIO();
-    // Setup Platform/Renderer bindings
-    ImGui_ImplGlfw_InitForOpenGL(window, true);
-    ImGui_ImplOpenGL3_Init();
-    // Setup Dear ImGui style
-    ImGui::StyleColorsDark();
+    // IMGUI_CHECKVERSION();
+    // ImGui::CreateContext();
+    // ImGuiIO &io = ImGui::GetIO();
+    // // Setup Platform/Renderer bindings
+    // ImGui_ImplGlfw_InitForOpenGL(window, true);
+    // ImGui_ImplOpenGL3_Init();
+    // // Setup Dear ImGui style
+    // ImGui::StyleColorsDark();
     
 
     /// SETUP OPENGL
@@ -179,19 +179,26 @@ int main(void)
     glfwSetScrollCallback(window, scroll_callback);
     
     /* Initialize Shaders */
-    Shader basicShader("./shaders/shader.vert", "./shaders/shader.frag");
-    Shader basicShader2("./shaders/shader.vert", "./shaders/shader.frag");
+    Shader basicShader("./shaders/basicShader.vert", "./shaders/basicShader.frag");
+    Shader lightShader("./shaders/lightShader.vert", "./shaders/lightShader.frag");
+    Shader lightSourceShader("./shaders/lightSourceShader.vert", "./shaders/lightSourceShader.frag");
     
     /* Create Objects */
     Texture brickTexture("./textures/bricks.jpg", "u_tex0");
     Texture blastoiseTexture("./textures/blastoise.png", "u_tex1", GL_RGBA);
     std::vector<Texture> cubeTextures = {brickTexture, blastoiseTexture};
-    std::vector<Texture> cube2Textures = {brickTexture};
 
-    Mesh cube(cubeVertices, cubeIndices, cubeTextures, &basicShader);
+    Mesh cube(cubeVertices, cubeIndices, cubeTextures, &lightShader);
 
-    Mesh cube2(cubeVertices, cubeIndices, &basicShader2);
-    cube2.setTextures(cube2Textures);
+    /* Light */
+    Mesh lightCube(cubeVertices, cubeIndices, &lightSourceShader);
+    glm::vec3 lightPos(2.5f, 2.0f, -2.0f);
+    glm::vec3 lightCol(1.0f, 1.0f,  1.0f);
+    lightShader.use();
+    lightShader.setUniformFloat3("u_lightCol", lightCol);
+    lightShader.setUniformFloat3("u_lightPos", lightPos);
+    lightSourceShader.use();
+    lightSourceShader.setUniformFloat3("u_lightCol", lightCol);
 
     /* Transformation Matrices */
     glm::mat4 model = glm::mat4(1.0f);
@@ -203,49 +210,51 @@ int main(void)
         processInput(window);
         
         /* Camera Calculations */
-        glm::mat4 projection = glm::perspective(glm::radians(camera.getFOV()),
+        glm::mat4 projection = glm::perspective(glm::radians(camera.fov),
                                                 (float)windowWidth / (float)windowHeight,
                                                 0.1f, 100.0f);
         glm::mat4 view = camera.getViewMatrix();
         glm::mat4 mvp = projection * view * model;
 
         /* Rendering */
-        glClearColor(0.1f,0.4f,0.6f, 1.0f);
+        // glClearColor(0.1f,0.4f,0.6f, 1.0f);
+        glClearColor(0.1f,0.1f,0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         /* Draw Objects */
         for (int i = 0; i < 10; i++)
         {   
-            basicShader.use();
+            lightShader.use();
             glm::mat4 model_i = glm::translate(model, glm::vec3(0.0f, 0.0f, -1.0f * i));
+            glm::mat4 modelIT_i = glm::transpose(glm::inverse(model_i));
             glm::mat4 mvp = projection * view * model_i;
 
-            basicShader.setUniformMat4("u_mvp", mvp);
+            lightShader.setUniformMat4("u_mvp", mvp);
+            lightShader.setUniformMat4("u_model", model_i);
+            lightShader.setUniformMat4("u_modelIT", modelIT_i);
+            lightShader.setUniformFloat3("u_viewPos", camera.position);
             
             cube.draw();
         }
-        
-        for (int i = 0; i < 10; i++)
-        {
-            basicShader2.use();
-            glm::mat4 model_i = glm::translate(model, glm::vec3(0.0f, 2.0f, -1.0f * i));
-            glm::mat4 mvp = projection * view * model_i;
 
-            basicShader2.setUniformMat4("u_mvp", mvp);
-            
-            cube2.draw();
-        }
+        /* Draw Light */
+        lightSourceShader.use();
+        glm::mat4 lightModel = glm::translate(model, lightPos);
+        lightModel = glm::scale(lightModel, glm::vec3(0.2f));
+        mvp = projection * view * lightModel;
+        lightSourceShader.setUniformMat4("u_mvp", mvp);
+        lightCube.draw();
 
         /* ImGUI */
         // feed inputs to dear imgui, start new frame
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
-        ImGui::Begin("Demo window");
-        ImGui::End();
+        // ImGui_ImplOpenGL3_NewFrame();
+        // ImGui_ImplGlfw_NewFrame();
+        // ImGui::NewFrame();
+        // ImGui::Begin("Demo window");
+        // ImGui::End();
 
-        ImGui::Render();
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        // ImGui::Render();
+        // ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
         /* Poll for and process events */
         glfwPollEvents();
