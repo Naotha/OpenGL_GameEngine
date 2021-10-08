@@ -15,6 +15,7 @@
 #include "Engine/mesh.hpp"
 #include "Engine/vertex.h"
 #include "Engine/camera.hpp"
+#include "Engine/material.h"
 
 
 void frambuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -123,6 +124,34 @@ std::vector<unsigned int> cubeIndices = {
     22, 23, 20,
 };
 
+/* Materials */
+std::vector<Material::Material> materials = {
+    Material::EMERALD,
+    Material::JADE,
+    Material::OBSIDIAN,
+    Material::PEARL,
+    Material::RUBY,
+    Material::TURQUOISE,
+    Material::BRASS,
+    Material::BRONZE,
+    Material::CHROME,
+    Material::COPPER,
+    Material::GOLD,
+    Material::SILVER,
+    Material::BLACK_PLASTIC,
+    Material::CYAN_PLASTIC,
+    Material::GREEN_PLASTIC,
+    Material::RED_PLASTIC,
+    Material::WHITE_PLASTIC,
+    Material::YELLOW_PLASTIC,
+    Material::BLACK_RUBBER,
+    Material::CYAN_RUBBER,
+    Material::GREEN_RUBBER,
+    Material::RED_RUBBER,
+    Material::WHITE_RUBBER,
+    Material::YELLOW_RUBBER
+};
+
 int main(void)
 {
     /// SETUP GLFW
@@ -180,7 +209,7 @@ int main(void)
     
     /* Initialize Shaders */
     Shader basicShader("./shaders/basicShader.vert", "./shaders/basicShader.frag");
-    Shader lightShader("./shaders/lightShader.vert", "./shaders/lightShader.frag");
+    Shader basicMaterialShader("./shaders/basicMaterialShader.vert", "./shaders/basicMaterialShader.frag");
     Shader lightSourceShader("./shaders/lightSourceShader.vert", "./shaders/lightSourceShader.frag");
     
     /* Create Objects */
@@ -188,15 +217,23 @@ int main(void)
     Texture blastoiseTexture("./textures/blastoise.png", "u_tex1", GL_RGBA);
     std::vector<Texture> cubeTextures = {brickTexture, blastoiseTexture};
 
-    Mesh cube(cubeVertices, cubeIndices, cubeTextures, &lightShader);
+    Mesh cube(cubeVertices, cubeIndices, cubeTextures, &basicMaterialShader);
 
     /* Light */
     Mesh lightCube(cubeVertices, cubeIndices, &lightSourceShader);
-    glm::vec3 lightPos(2.5f, 2.0f, -2.0f);
-    glm::vec3 lightCol(1.0f, 1.0f,  1.0f);
-    lightShader.use();
-    lightShader.setUniformFloat3("u_lightCol", lightCol);
-    lightShader.setUniformFloat3("u_lightPos", lightPos);
+    glm::vec3 lightPos(2.0f, 2.0f, 2.0f);
+    glm::vec3 lightCol(1.0f, 1.0f, 1.0f);
+    basicMaterialShader.use();
+    basicMaterialShader.setUniformFloat3("u_material.ambient", Material::EMERALD.ambient);
+    basicMaterialShader.setUniformFloat3("u_material.diffuse", Material::EMERALD.diffuse);
+    basicMaterialShader.setUniformFloat3("u_material.specular", Material::EMERALD.specular);
+    basicMaterialShader.setUniformFloat("u_material.shininess", Material::EMERALD.shininess);
+    glm::vec3 ambientColor = lightCol * glm::vec3(0.2f);
+    glm::vec3 diffuseColor = lightCol * glm::vec3(0.8f);
+    basicMaterialShader.setUniformFloat3("u_light.position", lightPos);
+    basicMaterialShader.setUniformFloat3("u_light.ambient", ambientColor);
+    basicMaterialShader.setUniformFloat3("u_light.diffuse", diffuseColor);
+    basicMaterialShader.setUniformFloat3("u_light.specular", lightCol);
     lightSourceShader.use();
     lightSourceShader.setUniformFloat3("u_lightCol", lightCol);
 
@@ -215,6 +252,7 @@ int main(void)
                                                 0.1f, 100.0f);
         glm::mat4 view = camera.getViewMatrix();
         glm::mat4 mvp = projection * view * model;
+        glm::mat4 modelIT = glm::transpose(glm::inverse(model));
 
         /* Rendering */
         // glClearColor(0.1f,0.4f,0.6f, 1.0f);
@@ -222,20 +260,21 @@ int main(void)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         /* Draw Objects */
-        for (int i = 0; i < 10; i++)
-        {   
-            lightShader.use();
-            glm::mat4 model_i = glm::translate(model, glm::vec3(0.0f, 0.0f, -1.0f * i));
-            glm::mat4 modelIT_i = glm::transpose(glm::inverse(model_i));
-            glm::mat4 mvp = projection * view * model_i;
+        basicMaterialShader.use();
 
-            lightShader.setUniformMat4("u_mvp", mvp);
-            lightShader.setUniformMat4("u_model", model_i);
-            lightShader.setUniformMat4("u_modelIT", modelIT_i);
-            lightShader.setUniformFloat3("u_viewPos", camera.position);
-            
-            cube.draw();
-        }
+        int i = glm::sin(glfwGetTime() * 0.2f + 4.7f) * 12 + 12;
+        std::cout<< i << std::endl;
+        basicMaterialShader.setUniformFloat3("u_material.ambient", materials[i].ambient);
+        basicMaterialShader.setUniformFloat3("u_material.diffuse", materials[i].diffuse);
+        basicMaterialShader.setUniformFloat3("u_material.specular", materials[i].specular);
+        basicMaterialShader.setUniformFloat("u_material.shininess", materials[i].shininess);
+
+        basicMaterialShader.setUniformMat4("u_mvp", mvp);
+        basicMaterialShader.setUniformMat4("u_model", model);
+        basicMaterialShader.setUniformMat4("u_modelIT", modelIT);
+        basicMaterialShader.setUniformFloat3("u_viewPos", camera.position);
+        
+        cube.draw();
 
         /* Draw Light */
         lightSourceShader.use();
