@@ -1,5 +1,4 @@
-#ifndef MESH_HPP
-#define MESH_HPP
+#pragma once
 
 #include <glad/glad.h>
 #include <vector>
@@ -11,20 +10,20 @@
 class Mesh
 {
 public:
+    std::vector<Vertex> vertices;
+    std::vector<unsigned int> indices;
+
     Mesh(std::vector<Vertex>& vertices, std::vector<unsigned int>& indices, Shader* shader);
     Mesh(std::vector<Vertex>& vertices, std::vector<unsigned int>& indices, std::vector<Texture>& textures, Shader* shader);
 
     void setTextures(std::vector<Texture>& textures);
 
     void draw();
-
 private:
     unsigned int _VBO;
     unsigned int _EBO;
     unsigned int _VAO;
 
-    std::vector<Vertex> _vertices;
-    std::vector<unsigned int> _indices;
     std::vector<Texture> _textures;
     Shader* _shader;
 
@@ -33,8 +32,8 @@ private:
 
 Mesh::Mesh(std::vector<Vertex>& vertices, std::vector<unsigned int>& indices, Shader* shader)
 {
-    _vertices = vertices;
-    _indices = indices;
+    this->vertices = vertices;
+    this->indices = indices;
     _shader = shader;
 
     _textures = std::vector<Texture>();
@@ -44,8 +43,8 @@ Mesh::Mesh(std::vector<Vertex>& vertices, std::vector<unsigned int>& indices, Sh
 
 Mesh::Mesh(std::vector<Vertex>& vertices, std::vector<unsigned int>& indices, std::vector<Texture>& textures, Shader* shader)
 {
-    _vertices = vertices;
-    _indices = indices;
+    this->vertices = vertices;
+    this->indices = indices;
     _textures = textures;
     _shader = shader;
 
@@ -62,17 +61,17 @@ void Mesh::_createBufferObjects()
     glBindVertexArray(_VAO);
     // Copy vertices array to VBO
     glBindBuffer(GL_ARRAY_BUFFER, _VBO);
-    glBufferData(GL_ARRAY_BUFFER, _vertices.size() * sizeof(Vertex), &_vertices[0], GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_STATIC_DRAW);
     // Copy indices array to EBO
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, _indices.size() * sizeof(unsigned int), &_indices[0], GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
     // Set the vertex attributes pointers
     // Position
     glEnableVertexAttribArray(0); 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);  // https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glVertexAttribPointer.xhtml
     // Color
     glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, color));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
     // Texture
     glEnableVertexAttribArray(2);
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, texCoord));
@@ -98,11 +97,9 @@ void Mesh::draw()
     }
     // Draw
     glBindVertexArray(_VAO);
-    glDrawElements(GL_TRIANGLES, _indices.size(), GL_UNSIGNED_INT, 0);
+    glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
 
     glActiveTexture(GL_TEXTURE0);
     _shader->unbind();
 }
-
-#endif

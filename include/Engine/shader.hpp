@@ -1,5 +1,4 @@
-#ifndef SHADER_HPP
-#define SHADER_HPP
+#pragma once
 
 #include <glad/glad.h>
 #include <glm/glm.hpp>
@@ -166,5 +165,3 @@ void Shader::setUniformMat4(const char* name, const glm::mat4& value)
 {
     glUniformMatrix4fv(glGetUniformLocation(_ID, name), 1, GL_FALSE, glm::value_ptr(value));
 }
-
-#endif

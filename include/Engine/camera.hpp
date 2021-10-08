@@ -1,5 +1,4 @@
-#ifndef CAMERA_HPP
-#define CMAERA_HPP
+#pragma once
 
 #include <glad/glad.h>
 #include <glm/glm.hpp>
@@ -22,6 +21,11 @@ enum Camera_Movement
 class Camera
 {
 public:
+    glm::vec3 position;
+    float movementSpeed;
+    float mouseSensitivity;
+    float fov;
+
     Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch, float movementSpeed, float mouseSensitivity, float fov);
 
     void processKeyboard(Camera_Movement direction, float deltaTime);
@@ -29,37 +33,30 @@ public:
     void processMouseScroll(float yOffset);
 
     glm::mat4 getViewMatrix();
-    float getFOV();
-
 private:
-    glm::vec3 _position;
-    glm::vec3 _front;
     glm::vec3 _worldUp;
+    glm::vec3 _front;
     glm::vec3 _up;
     glm::vec3 _right;
 
     float _yaw;
     float _pitch;
 
-    float _movementSpeed;
-    float _mouseSensitivity;
-    float _fov;
-
     void _updateCameraVectors();
 };
 
 Camera::Camera(glm::vec3 position, glm::vec3 worldUp = glm::vec3(0.0f, 1.0f, 0.0f), float yaw = DEFAULT_YAW, float pitch = DEFAULT_PITCH, float movementSpeed = DEFAULT_SPEED, float mouseSensitivity = DEFAULT_SENSITIVITY, float fov = DEFAULT_FOV)
 {
-    _position = position;
+    this->position = position;
     _front = glm::vec3(0.0f, 0.0f, -1.0f);
     _worldUp = worldUp;
 
     _yaw = yaw;
     _pitch = pitch;
 
-    _movementSpeed = movementSpeed;
-    _mouseSensitivity = mouseSensitivity;
-    _fov = fov;
+    this->movementSpeed = movementSpeed;
+    this->mouseSensitivity = mouseSensitivity;
+    fov = fov;
 
     _updateCameraVectors();
 }
@@ -78,21 +75,21 @@ void Camera::_updateCameraVectors()
 
 void Camera::processKeyboard(Camera_Movement direction, float deltaTime)
 {
-    float velocity = _movementSpeed * deltaTime;
+    float velocity = movementSpeed * deltaTime;
     if (direction == FORWARD)
-        _position += velocity * _front;
+        position += velocity * _front;
     if (direction == BACKWARD)
-        _position -= velocity * _front;
+        position -= velocity * _front;
     if (direction == LEFT)
-        _position -= velocity * _right;
+        position -= velocity * _right;
     if (direction == RIGHT)
-        _position += velocity * _right;
+        position += velocity * _right;
 }
 
 void Camera::processMouseMovement(float xOffset, float yOffset)
 {
-    xOffset *= _mouseSensitivity;
-    yOffset *= _mouseSensitivity;
+    xOffset *= mouseSensitivity;
+    yOffset *= mouseSensitivity;
 
     _yaw += xOffset;
     _pitch += yOffset;
@@ -106,21 +103,14 @@ void Camera::processMouseMovement(float xOffset, float yOffset)
 
 void Camera::processMouseScroll(float yOffset)
 {
-    _fov -= (float)yOffset;
-    if (_fov < 1.0f)
-        _fov = 1.0f;
-    if (_fov > 45.0f)
-        _fov = 45.0f;
+    fov -= (float)yOffset;
+    if (fov < 1.0f)
+        fov = 1.0f;
+    if (fov > 45.0f)
+        fov = 45.0f;
 }
 
 glm::mat4 Camera::getViewMatrix()
 {
-    return glm::lookAt(_position, _position + _front, _up);
+    return glm::lookAt(position, position + _front, _up);
 }
-
-float Camera::getFOV()
-{
-    return _fov;
-}
-
-#endif
