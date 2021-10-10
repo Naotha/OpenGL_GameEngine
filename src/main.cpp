@@ -124,34 +124,6 @@ std::vector<unsigned int> cubeIndices = {
     22, 23, 20,
 };
 
-/* Materials */
-std::vector<Material::Material> materials = {
-    Material::EMERALD,
-    Material::JADE,
-    Material::OBSIDIAN,
-    Material::PEARL,
-    Material::RUBY,
-    Material::TURQUOISE,
-    Material::BRASS,
-    Material::BRONZE,
-    Material::CHROME,
-    Material::COPPER,
-    Material::GOLD,
-    Material::SILVER,
-    Material::BLACK_PLASTIC,
-    Material::CYAN_PLASTIC,
-    Material::GREEN_PLASTIC,
-    Material::RED_PLASTIC,
-    Material::WHITE_PLASTIC,
-    Material::YELLOW_PLASTIC,
-    Material::BLACK_RUBBER,
-    Material::CYAN_RUBBER,
-    Material::GREEN_RUBBER,
-    Material::RED_RUBBER,
-    Material::WHITE_RUBBER,
-    Material::YELLOW_RUBBER
-};
-
 int main(void)
 {
     /// SETUP GLFW
@@ -173,19 +145,7 @@ int main(void)
 
     /* Make the window's context current */
     glfwMakeContextCurrent(window);
-
-    /// SETUP IMGUI
-    // Setup Dear ImGui context
-    // IMGUI_CHECKVERSION();
-    // ImGui::CreateContext();
-    // ImGuiIO &io = ImGui::GetIO();
-    // // Setup Platform/Renderer bindings
-    // ImGui_ImplGlfw_InitForOpenGL(window, true);
-    // ImGui_ImplOpenGL3_Init();
-    // // Setup Dear ImGui style
-    // ImGui::StyleColorsDark();
     
-
     /// SETUP OPENGL
     /* Initialize GLAD */
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
@@ -208,32 +168,30 @@ int main(void)
     glfwSetScrollCallback(window, scroll_callback);
     
     /* Initialize Shaders */
-    Shader basicShader("./shaders/basicShader.vert", "./shaders/basicShader.frag");
-    Shader basicMaterialShader("./shaders/basicMaterialShader.vert", "./shaders/basicMaterialShader.frag");
+    Shader lightingShader("./shaders/lightingShader.vert", "./shaders/lightingShader.frag");
     Shader lightSourceShader("./shaders/lightSourceShader.vert", "./shaders/lightSourceShader.frag");
     
     /* Create Objects */
-    Texture brickTexture("./textures/bricks.jpg", "u_tex0");
-    Texture blastoiseTexture("./textures/blastoise.png", "u_tex1", GL_RGBA);
-    std::vector<Texture> cubeTextures = {brickTexture, blastoiseTexture};
+    Texture diffuseMap("./textures/container.png", "u_material.diffuse", GL_RGBA);
+    Texture specularMap("./textures/container_specular.png", "u_material.specular", GL_RGBA);
+    std::vector<Texture> cubeTextures = {diffuseMap, specularMap};
+    Mesh cube(cubeVertices, cubeIndices, cubeTextures, &lightingShader);
 
-    Mesh cube(cubeVertices, cubeIndices, cubeTextures, &basicMaterialShader);
+    Mesh lightCube(cubeVertices, cubeIndices, &lightSourceShader);
 
     /* Light */
-    Mesh lightCube(cubeVertices, cubeIndices, &lightSourceShader);
-    glm::vec3 lightPos(2.0f, 2.0f, 2.0f);
+    lightingShader.use();
+    lightingShader.setUniformFloat3("u_material.specular", glm::vec3(0.5f, 0.5f, 0.5f));
+    lightingShader.setUniformFloat("u_material.shininess", 32.0f);
+    glm::vec3 lightPos(1.0f, 1.0f, 1.0f);
     glm::vec3 lightCol(1.0f, 1.0f, 1.0f);
-    basicMaterialShader.use();
-    basicMaterialShader.setUniformFloat3("u_material.ambient", Material::EMERALD.ambient);
-    basicMaterialShader.setUniformFloat3("u_material.diffuse", Material::EMERALD.diffuse);
-    basicMaterialShader.setUniformFloat3("u_material.specular", Material::EMERALD.specular);
-    basicMaterialShader.setUniformFloat("u_material.shininess", Material::EMERALD.shininess);
     glm::vec3 ambientColor = lightCol * glm::vec3(0.2f);
     glm::vec3 diffuseColor = lightCol * glm::vec3(0.8f);
-    basicMaterialShader.setUniformFloat3("u_light.position", lightPos);
-    basicMaterialShader.setUniformFloat3("u_light.ambient", ambientColor);
-    basicMaterialShader.setUniformFloat3("u_light.diffuse", diffuseColor);
-    basicMaterialShader.setUniformFloat3("u_light.specular", lightCol);
+    lightingShader.setUniformFloat3("u_light.position", lightPos);
+    lightingShader.setUniformFloat3("u_light.ambient", ambientColor);
+    lightingShader.setUniformFloat3("u_light.diffuse", diffuseColor);
+    lightingShader.setUniformFloat3("u_light.specular", lightCol);
+
     lightSourceShader.use();
     lightSourceShader.setUniformFloat3("u_lightCol", lightCol);
 
@@ -260,19 +218,12 @@ int main(void)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         /* Draw Objects */
-        basicMaterialShader.use();
+        lightingShader.use();
 
-        int i = glm::sin(glfwGetTime() * 0.2f + 4.7f) * 12 + 12;
-        std::cout<< i << std::endl;
-        basicMaterialShader.setUniformFloat3("u_material.ambient", materials[i].ambient);
-        basicMaterialShader.setUniformFloat3("u_material.diffuse", materials[i].diffuse);
-        basicMaterialShader.setUniformFloat3("u_material.specular", materials[i].specular);
-        basicMaterialShader.setUniformFloat("u_material.shininess", materials[i].shininess);
-
-        basicMaterialShader.setUniformMat4("u_mvp", mvp);
-        basicMaterialShader.setUniformMat4("u_model", model);
-        basicMaterialShader.setUniformMat4("u_modelIT", modelIT);
-        basicMaterialShader.setUniformFloat3("u_viewPos", camera.position);
+        lightingShader.setUniformMat4("u_mvp", mvp);
+        lightingShader.setUniformMat4("u_model", model);
+        lightingShader.setUniformMat4("u_modelIT", modelIT);
+        lightingShader.setUniformFloat3("u_viewPos", camera.position);
         
         cube.draw();
 
@@ -283,17 +234,6 @@ int main(void)
         mvp = projection * view * lightModel;
         lightSourceShader.setUniformMat4("u_mvp", mvp);
         lightCube.draw();
-
-        /* ImGUI */
-        // feed inputs to dear imgui, start new frame
-        // ImGui_ImplOpenGL3_NewFrame();
-        // ImGui_ImplGlfw_NewFrame();
-        // ImGui::NewFrame();
-        // ImGui::Begin("Demo window");
-        // ImGui::End();
-
-        // ImGui::Render();
-        // ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
         /* Poll for and process events */
         glfwPollEvents();
