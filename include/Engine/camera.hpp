@@ -32,7 +32,8 @@ public:
     void processMouseMovement(float xOffset, float yOffset);
     void processMouseScroll(float yOffset);
 
-    glm::mat4 getViewMatrix();
+    glm::mat4 getViewMatrix() { return glm::lookAt(position, position + _front, _up); }
+    glm::vec3 getFront() { return _front; }
 private:
     glm::vec3 _worldUp;
     glm::vec3 _front;
@@ -108,9 +109,4 @@ void Camera::processMouseScroll(float yOffset)
         fov = 1.0f;
     if (fov > 45.0f)
         fov = 45.0f;
-}
-
-glm::mat4 Camera::getViewMatrix()
-{
-    return glm::lookAt(position, position + _front, _up);
 }

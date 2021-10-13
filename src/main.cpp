@@ -23,6 +23,7 @@ void frambuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 void calculateDeltaTime();
 
 /* Window, cursor */
@@ -39,6 +40,9 @@ float lastFrame = 0.0f;
 
 /* Camera */
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+
+/* Light */
+bool spotLightOn = true;
 
 /* Vertices */
 std::vector<Vertex> triangleVertices = {
@@ -167,6 +171,7 @@ int main(void)
     /* Set Mouse callbacks */
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetScrollCallback(window, scroll_callback);
+    glfwSetKeyCallback(window, key_callback);
     
     /* Initialize Shaders */
     Shader lightingShader("./shaders/lightingShader.vert", "./shaders/lightingShader.frag");
@@ -193,9 +198,40 @@ int main(void)
     /* Transformation Matrices */
     glm::mat4 model = glm::mat4(1.0f);
 
-    // Light Positions
-    DirectionalLight dirLight(-lightPos, ambientCol, diffuseCol, lightCol);
-    dirLight.setLightInShader("u_dirLight", lightingShader);
+    // Light Types
+    // DirectionalLight dirLight(-lightPos, ambientCol, diffuseCol, lightCol);
+    // dirLight.setLightInShader("u_dirLight", lightingShader);
+
+    Attenuation attenuation{1.0f, 0.09f, 0.032f};
+    SpotLight spotLight(camera.position, camera.getFront(), glm::cos(glm::radians(12.5f)), glm::cos(glm::radians(17.5f)), attenuation, ambientCol, diffuseCol, lightCol);
+    spotLight.setLightInShader("u_spotLights[0]", lightingShader);
+    lightingShader.use();
+    lightingShader.setUniformInt("u_spotLightsNum", 1);
+
+    std::vector<glm::vec3> cubePositions{
+        glm::vec3( 0.0f,  0.0f,  0.0f),
+        glm::vec3( 2.0f,  5.0f, -15.0f),
+        glm::vec3(-1.5f, -2.2f, -2.5f),
+        glm::vec3(-3.8f, -2.0f, -12.3f),
+        glm::vec3( 2.4f, -0.4f, -3.5f),
+        glm::vec3(-1.7f,  3.0f, -7.5f),
+        glm::vec3( 1.3f, -2.0f, -2.5f),
+        glm::vec3( 1.5f,  2.0f, -2.5f),
+        glm::vec3( 1.5f,  0.2f, -1.5f),
+        glm::vec3(-1.3f,  1.0f, -1.5f)
+    };
+
+    std::vector<glm::vec3> pointLightPositions{
+        glm::vec3( 0.0f,  0.0f, -3.0f),
+        glm::vec3(-4.0f,  2.0f, -12.0f)
+    };
+
+    PointLight pointLight1(pointLightPositions[0], attenuation, ambientCol, diffuseCol, lightCol);
+    pointLight1.setLightInShader("u_pointLights[0]", lightingShader);
+    PointLight pointLight2(pointLightPositions[1], attenuation, ambientCol, diffuseCol, lightCol);
+    pointLight2.setLightInShader("u_pointLights[1]", lightingShader);
+    lightingShader.use();
+    lightingShader.setUniformInt("u_pointLightsNum", 2);
 
     /* Loop until the user closes the window - Render Loop */
     while (!glfwWindowShouldClose(window))
@@ -208,8 +244,7 @@ int main(void)
                                                 (float)windowWidth / (float)windowHeight,
                                                 0.1f, 100.0f);
         glm::mat4 view = camera.getViewMatrix();
-        glm::mat4 mvp = projection * view * model;
-        glm::mat4 modelIT = glm::transpose(glm::inverse(model));
+        
 
         /* Rendering */
         // glClearColor(0.1f,0.4f,0.6f, 1.0f);
@@ -217,26 +252,52 @@ int main(void)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         /* Draw Objects */
-
-        for (int i = 0; i < 1; i++)
+        glm::mat4 mvp;
+        for (int i = 0; i < cubePositions.size(); i++)
         {
             lightingShader.use();
 
+            glm::mat4 model_i = glm::translate(model, cubePositions[i]);
+            mvp = projection * view * model_i;
+            glm::mat4 modelIT = glm::transpose(glm::inverse(model_i));
+
             lightingShader.setUniformMat4("u_mvp", mvp);
-            lightingShader.setUniformMat4("u_model", model);
+            lightingShader.setUniformMat4("u_model", model_i);
             lightingShader.setUniformMat4("u_modelIT", modelIT);
             lightingShader.setUniformFloat3("u_viewPos", camera.position);
             
             cube.draw();
         }
 
+        lightingShader.use();
+        spotLight.setPosition(camera.position);
+        spotLight.setDirection(camera.getFront());
+        //std::cout << camera.getFront().x << camera.getFront().y << camera.getFront().z << std::endl;
+        spotLight.setLightInShader("u_spotLights[0]", lightingShader);
+        //lightingShader.setUniformFloat3("u_spotLights[0].position", camera.position);
+
+
         /* Draw Light */
-        lightSourceShader.use();
-        glm::mat4 lightModel = glm::translate(model, lightPos);
-        lightModel = glm::scale(lightModel, glm::vec3(0.2f));
-        mvp = projection * view * lightModel;
-        lightSourceShader.setUniformMat4("u_mvp", mvp);
-        lightCube.draw();
+        for (int i = 0; i < pointLightPositions.size(); i++)
+        {
+            lightSourceShader.use();
+            glm::mat4 lightModel = glm::translate(model, pointLightPositions[i]);
+            lightModel = glm::scale(lightModel, glm::vec3(0.2f));
+            mvp = projection * view * lightModel;
+            lightSourceShader.setUniformMat4("u_mvp", mvp);
+            lightCube.draw();
+        }
+
+        if (spotLightOn)
+        {
+            lightingShader.use();
+            lightingShader.setUniformInt("u_spotLightsNum", 1);
+        }
+        else
+        {
+            lightingShader.use();
+            lightingShader.setUniformInt("u_spotLightsNum", 0);
+        } 
 
         /* Poll for and process events */
         glfwPollEvents();
@@ -307,6 +368,14 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
         lastY = ypos;
 
         camera.processMouseMovement(xOffset, yOffset);
+    }
+}
+
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+    if (key == GLFW_KEY_E && action == GLFW_PRESS)
+    {
+        spotLightOn = !spotLightOn;
     }
 }
 

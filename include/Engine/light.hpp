@@ -47,12 +47,19 @@ private:
     glm::vec3 _direction;
 };
 
+struct Attenuation
+{
+    float constant;
+    float linear;
+    float quadratic;
+};
+
 class PointLight: public Light
 {
 public:
-    PointLight(glm::vec3 position, float constAttenuation, float linAttenuation, float quadAttenuation,
+    PointLight(glm::vec3 position, Attenuation attenuation,
                glm::vec3 ambient, glm::vec3 diffuse, glm::vec3 specular) :
-               _position(position), _constAttenuation(constAttenuation), _linAttenuation(linAttenuation), _quadAttenuation(quadAttenuation) 
+               _position(position), _attenuation(attenuation)
     {
         _ambient = ambient;
         _diffuse = diffuse;
@@ -60,23 +67,23 @@ public:
     };
 
     glm::vec3 getPosition() { return _position; }
-    float getConstAttenuation() { return _constAttenuation; }
-    float getLinAttenuation() { return _linAttenuation; }
-    float getQuadAttenuation() { return _quadAttenuation; }
+    float getConstAttenuation() { return _attenuation.constant; }
+    float getLinAttenuation() { return _attenuation.linear; }
+    float getQuadAttenuation() { return _attenuation.quadratic; }
 
     void setPosition(glm::vec3 position) { _position = position; }
-    void setConstAttenuation(float constAttenuation) { _constAttenuation = constAttenuation; }
-    void setLinAttenuation(float linAttenuation) { _linAttenuation = linAttenuation; }
-    void setQuadAttenuation(float quadAttenuation) { _quadAttenuation = quadAttenuation; }
+    void setConstAttenuation(float constAttenuation) { _attenuation.constant = constAttenuation; }
+    void setLinAttenuation(float linAttenuation) { _attenuation.linear = linAttenuation; }
+    void setQuadAttenuation(float quadAttenuation) { _attenuation.quadratic = quadAttenuation; }
 
     void setLightInShader(std::string uniformLightName, Shader& shader) final override
     {
         shader.use();
-        shader.setUniformFloat3(uniformLightName.append(".position").c_str(), _position);
+        shader.setUniformFloat3((uniformLightName + ".position").c_str(), _position);
 
-        shader.setUniformFloat((uniformLightName + ".constant").c_str(), _constAttenuation);
-        shader.setUniformFloat((uniformLightName + ".linear").c_str(), _linAttenuation);
-        shader.setUniformFloat((uniformLightName + ".quadratic").c_str(), _quadAttenuation);
+        shader.setUniformFloat((uniformLightName + ".constant").c_str(), _attenuation.constant);
+        shader.setUniformFloat((uniformLightName + ".linear").c_str(), _attenuation.linear);
+        shader.setUniformFloat((uniformLightName + ".quadratic").c_str(), _attenuation.quadratic);
 
         shader.setUniformFloat3((uniformLightName + ".ambient").c_str(), _ambient);
         shader.setUniformFloat3((uniformLightName + ".diffuse").c_str(), _diffuse);
@@ -86,17 +93,16 @@ public:
 private:
     glm::vec3 _position;
 
-    float _constAttenuation;
-    float _linAttenuation;
-    float _quadAttenuation;
+    Attenuation _attenuation;
 };
 
 class SpotLight: public Light
 {
 public:
     SpotLight(glm::vec3 position, glm::vec3 direction, float innerCutOff, float outerCutOff,
-              glm::vec3 ambient, glm::vec3 diffuse, glm::vec3 specular) :
-    _position(position), _direction(direction), _innerCutOff(innerCutOff), _outerCutOff(outerCutOff)
+              Attenuation attenuation, glm::vec3 ambient, glm::vec3 diffuse, glm::vec3 specular) :
+    _position(position), _direction(direction), _innerCutOff(innerCutOff), _outerCutOff(outerCutOff),
+    _attenuation(attenuation)
     {
         _ambient = ambient;
         _diffuse = diffuse;
@@ -107,20 +113,30 @@ public:
     glm::vec3 getDirection() { return _direction; }
     float getInnerCutOff() { return _innerCutOff; }
     float getOuterCutOff() { return _outerCutOff; }
+    float getConstAttenuation() { return _attenuation.constant; }
+    float getLinAttenuation() { return _attenuation.linear; }
+    float getQuadAttenuation() { return _attenuation.quadratic; }
 
     void setPosition(glm::vec3 position) { _position = position; }
     void setDirection(glm::vec3 direction) { _direction = direction; }
     void setInnerCutOff(float innerCutOff) { _innerCutOff = innerCutOff; }
     void setOuterCutOff(float outerCutOff) { _outerCutOff = outerCutOff; }
+    void setConstAttenuation(float constAttenuation) { _attenuation.constant = constAttenuation; }
+    void setLinAttenuation(float linAttenuation) { _attenuation.linear = linAttenuation; }
+    void setQuadAttenuation(float quadAttenuation) { _attenuation.quadratic = quadAttenuation; }
 
     void setLightInShader(std::string uniformLightName, Shader& shader) final override
     {
         shader.use();
         shader.setUniformFloat3((uniformLightName + ".position").c_str(), _position);
-        shader.setUniformFloat3((uniformLightName + ".position").c_str(), _direction);
+        shader.setUniformFloat3((uniformLightName + ".direction").c_str(), _direction);
 
         shader.setUniformFloat((uniformLightName + ".innerCutOff").c_str(), _innerCutOff);
         shader.setUniformFloat((uniformLightName + ".outerCutOff").c_str(), _outerCutOff);
+
+        shader.setUniformFloat((uniformLightName + ".constant").c_str(), _attenuation.constant);
+        shader.setUniformFloat((uniformLightName + ".linear").c_str(), _attenuation.linear);
+        shader.setUniformFloat((uniformLightName + ".quadratic").c_str(), _attenuation.quadratic);
 
         shader.setUniformFloat3((uniformLightName + ".ambient").c_str(), _ambient);
         shader.setUniformFloat3((uniformLightName + ".diffuse").c_str(), _diffuse);
@@ -133,4 +149,6 @@ private:
     
     float _innerCutOff;
     float _outerCutOff;
+
+    Attenuation _attenuation;
 };

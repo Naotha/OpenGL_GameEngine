@@ -39,6 +39,10 @@ struct SpotLight
     vec3 ambient;
     vec3 diffuse;
     vec3 specular;
+
+    float constant;
+    float linear;
+    float quadratic;
 };
 
 uniform vec3 u_viewPos;
@@ -46,8 +50,10 @@ uniform Material u_material;
 
 uniform DirectionalLight u_dirLight;
 #define POINT_LIGHT_NUM 8
+uniform int u_pointLightsNum;
 uniform PointLight u_pointLights[POINT_LIGHT_NUM];
 #define SPOT_LIGHT_NUM 8
+uniform int u_spotLightsNum;
 uniform SpotLight u_spotLights[SPOT_LIGHT_NUM];
 
 in vec3 vertNorm;
@@ -72,11 +78,11 @@ void main()
     // Directional Lighting
     vec3 result = CalculateDirLight(u_dirLight, norm, viewDir, diffuseMapValues, specularMapValues);
     // Point Lights
-    //for (int i = 0; i < POINT_LIGHT_NUM; i++)
-    //    result += CalculatePointLight(u_pointLights[i], norm, viewDir);
+    for (int i = 0; i < u_pointLightsNum; i++)
+        result += CalculatePointLight(u_pointLights[i], norm, viewDir, diffuseMapValues, specularMapValues);
     // Spot Lights
-    //for (int i = 0; i < SPOT_LIGHT_NUM; i++)
-    //    result += CalculatePointLight(u_spotLights[i], norm, viewDir);
+    for (int i = 0; i < u_spotLightsNum; i++)
+        result += CalculateSpotLight(u_spotLights[i], norm, viewDir, diffuseMapValues, specularMapValues);
 
     fragCol = vec4(result, 1.0f);
 }
@@ -143,13 +149,16 @@ vec3 CalculateSpotLight(SpotLight light, vec3 normal, vec3 viewDir, vec3 diffuse
         float spec = pow(clamp(dot(viewDir, reflectDir), 0.0f, 1.0f), u_material.shininess);
         specular = (specularMapValues * spec) * light.specular;
     }
+    // Attenuation
+    float distance = length(light.position - vertFragPos);
+    float attenuation = 1.0f / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
     // Softening
     float theta = dot(lightDir, normalize(-light.direction));
     float epsilon = light.innerCutOff - light.outerCutOff;
     float intensity = clamp((theta - light.outerCutOff) / epsilon, 0.0f, 1.0f);
 
-    ambient  *= intensity;
-    diffuse  *= intensity;
-    specular *= intensity;
+    ambient  *= intensity * attenuation;
+    diffuse  *= intensity * attenuation;
+    specular *= intensity * attenuation;
     return (ambient + diffuse + specular);
 }
