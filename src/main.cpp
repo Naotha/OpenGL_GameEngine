@@ -16,6 +16,7 @@
 #include "Engine/vertex.h"
 #include "Engine/camera.hpp"
 #include "Engine/material.h"
+#include "Engine/light.hpp"
 
 
 void frambuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -181,22 +182,20 @@ int main(void)
 
     /* Light */
     lightingShader.use();
-    lightingShader.setUniformFloat3("u_material.specular", glm::vec3(0.5f, 0.5f, 0.5f));
     lightingShader.setUniformFloat("u_material.shininess", 32.0f);
     glm::vec3 lightPos(1.0f, 1.0f, 1.0f);
     glm::vec3 lightCol(1.0f, 1.0f, 1.0f);
-    glm::vec3 ambientColor = lightCol * glm::vec3(0.2f);
-    glm::vec3 diffuseColor = lightCol * glm::vec3(0.8f);
-    lightingShader.setUniformFloat3("u_light.position", lightPos);
-    lightingShader.setUniformFloat3("u_light.ambient", ambientColor);
-    lightingShader.setUniformFloat3("u_light.diffuse", diffuseColor);
-    lightingShader.setUniformFloat3("u_light.specular", lightCol);
-
+    glm::vec3 ambientCol = lightCol * glm::vec3(0.2f);
+    glm::vec3 diffuseCol = lightCol * glm::vec3(0.8f);
     lightSourceShader.use();
     lightSourceShader.setUniformFloat3("u_lightCol", lightCol);
 
     /* Transformation Matrices */
     glm::mat4 model = glm::mat4(1.0f);
+
+    // Light Positions
+    DirectionalLight dirLight(-lightPos, ambientCol, diffuseCol, lightCol);
+    dirLight.setLightInShader("u_dirLight", lightingShader);
 
     /* Loop until the user closes the window - Render Loop */
     while (!glfwWindowShouldClose(window))
@@ -218,14 +217,18 @@ int main(void)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         /* Draw Objects */
-        lightingShader.use();
 
-        lightingShader.setUniformMat4("u_mvp", mvp);
-        lightingShader.setUniformMat4("u_model", model);
-        lightingShader.setUniformMat4("u_modelIT", modelIT);
-        lightingShader.setUniformFloat3("u_viewPos", camera.position);
-        
-        cube.draw();
+        for (int i = 0; i < 1; i++)
+        {
+            lightingShader.use();
+
+            lightingShader.setUniformMat4("u_mvp", mvp);
+            lightingShader.setUniformMat4("u_model", model);
+            lightingShader.setUniformMat4("u_modelIT", modelIT);
+            lightingShader.setUniformFloat3("u_viewPos", camera.position);
+            
+            cube.draw();
+        }
 
         /* Draw Light */
         lightSourceShader.use();
