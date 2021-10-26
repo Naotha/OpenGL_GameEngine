@@ -8,8 +8,13 @@ GLAD_SRC = ./vendor/glad/glad.c
 IMGUI_SRC = $(wildcard ./vendor/ImGui/*.cpp)\
 		    $(wildcard ./vendor/ImGui/backends/*.cpp)\
 
+LIBRARIES = -lopengl32\
+			-lglfw3dll\
+			-limm32\
+			-lassimp
+
 all:
-	g++ -std=c++17 $(INC) -L./lib -o engine $(MAIN_SRC) $(GLAD_SRC) $(IMGUI_SRC) -lopengl32 -lglfw3dll -limm32
+	g++ -std=c++17 $(INC) -L./lib -o engine $(MAIN_SRC) $(GLAD_SRC) $(IMGUI_SRC) $(LIBRARIES)
 
 no_gui:
-	g++ -std=c++17 $(INC) -L./lib -o engine $(MAIN_SRC) $(GLAD_SRC) -lopengl32 -lglfw3dll -limm32
+	g++ -std=c++17 $(INC) -L./lib -o engine $(MAIN_SRC) $(GLAD_SRC) $(LIBRARIES)
