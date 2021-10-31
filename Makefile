@@ -18,3 +18,6 @@ all:
 
 no_gui:
 	g++ -std=c++17 $(INC) -L./lib -o engine $(MAIN_SRC) $(GLAD_SRC) $(LIBRARIES)
+
+debug:
+	g++ -g -Wall -std=c++17 $(INC) -L./lib -o engine $(MAIN_SRC) $(GLAD_SRC) $(LIBRARIES)
