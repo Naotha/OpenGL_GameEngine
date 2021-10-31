@@ -15,10 +15,10 @@
 #include "Engine/shader.hpp"
 #include "Engine/texture.hpp"
 #include "Engine/mesh.hpp"
-#include "Engine/vertex.h"
 #include "Engine/camera.hpp"
 #include "Engine/material.h"
 #include "Engine/light.hpp"
+#include "Engine/model.hpp"
 
 
 void frambuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -180,13 +180,15 @@ int main(void)
     Shader lightSourceShader("./shaders/lightSourceShader.vert", "./shaders/lightSourceShader.frag");
     
     /* Create Objects */
-    Texture diffuseMap("./textures/container.png", "u_material.diffuse", GL_RGBA);
-    Texture specularMap("./textures/container_specular.png", "u_material.specular", GL_RGBA);
+    Texture diffuseMap("./textures/container.png", TextureType::DIFFUSE);
+    Texture specularMap("./textures/container_specular.png", TextureType::SPECULAR);
     std::vector<Texture> cubeTextures = {diffuseMap, specularMap};
-    Mesh cube(cubeVertices, cubeIndices, cubeTextures, &lightingShader);
+    Mesh cube(cubeVertices, cubeIndices, cubeTextures);
 
-    Mesh lightCube(cubeVertices, cubeIndices, &lightSourceShader);
+    Mesh lightCube(cubeVertices, cubeIndices);
 
+    //Model nano("./models/nanosuit/nanosuit.obj");
+    Model backpack("./models/backpack/backpack.obj");
     /* Light */
     lightingShader.use();
     lightingShader.setUniformFloat("u_material.shininess", 32.0f);
@@ -201,11 +203,10 @@ int main(void)
     glm::mat4 model = glm::mat4(1.0f);
 
     // Light Types
-    // DirectionalLight dirLight(-lightPos, ambientCol, diffuseCol, lightCol);
-    // dirLight.setLightInShader("u_dirLight", lightingShader);
+    DirectionalLight dirLight(-lightPos, ambientCol, diffuseCol, lightCol);
+    dirLight.setLightInShader("u_dirLight", lightingShader);
 
-    Attenuation attenuation{1.0f, 0.09f, 0.032f};
-    SpotLight spotLight(camera.position, camera.getFront(), glm::cos(glm::radians(12.5f)), glm::cos(glm::radians(17.5f)), attenuation, ambientCol, diffuseCol, lightCol);
+    SpotLight spotLight(camera.position, camera.getFront(), glm::cos(glm::radians(12.5f)), glm::cos(glm::radians(17.5f)), CONST_ATTENUATION, ambientCol, diffuseCol, lightCol);
     spotLight.setLightInShader("u_spotLights[0]", lightingShader);
     lightingShader.use();
     lightingShader.setUniformInt("u_spotLightsNum", 1);
@@ -228,9 +229,9 @@ int main(void)
         glm::vec3(-4.0f,  2.0f, -12.0f)
     };
 
-    PointLight pointLight1(pointLightPositions[0], attenuation, ambientCol, diffuseCol, lightCol);
+    PointLight pointLight1(pointLightPositions[0], CONST_ATTENUATION, ambientCol, diffuseCol, lightCol);
     pointLight1.setLightInShader("u_pointLights[0]", lightingShader);
-    PointLight pointLight2(pointLightPositions[1], attenuation, ambientCol, diffuseCol, lightCol);
+    PointLight pointLight2(pointLightPositions[1], CONST_ATTENUATION, ambientCol, diffuseCol, lightCol);
     pointLight2.setLightInShader("u_pointLights[1]", lightingShader);
     lightingShader.use();
     lightingShader.setUniformInt("u_pointLightsNum", 2);
@@ -255,21 +256,33 @@ int main(void)
 
         /* Draw Objects */
         glm::mat4 mvp;
-        for (int i = 0; i < cubePositions.size(); i++)
-        {
-            lightingShader.use();
+        lightingShader.use();
+        glm::mat4 model_i = glm::translate(model, cubePositions[0]);
+        mvp = projection * view * model_i;
+        glm::mat4 modelIT = glm::transpose(glm::inverse(model_i));
+        lightingShader.setUniformMat4("u_mvp", mvp);
+        lightingShader.setUniformMat4("u_model", model_i);
+        lightingShader.setUniformMat4("u_modelIT", modelIT);
+        lightingShader.setUniformFloat3("u_viewPos", camera.position);
+        backpack.draw(lightingShader);
+        //nano.draw(lightingShader);
+        // glm::mat4 mvp;
+        // for (int i = 0; i < cubePositions.size(); i++)
+        // {
+        //     lightingShader.use();
 
-            glm::mat4 model_i = glm::translate(model, cubePositions[i]);
-            mvp = projection * view * model_i;
-            glm::mat4 modelIT = glm::transpose(glm::inverse(model_i));
+        //     glm::mat4 model_i = glm::translate(model, cubePositions[i]);
+        //     mvp = projection * view * model_i;
+        //     glm::mat4 modelIT = glm::transpose(glm::inverse(model_i));
 
-            lightingShader.setUniformMat4("u_mvp", mvp);
-            lightingShader.setUniformMat4("u_model", model_i);
-            lightingShader.setUniformMat4("u_modelIT", modelIT);
-            lightingShader.setUniformFloat3("u_viewPos", camera.position);
+        //     lightingShader.setUniformMat4("u_mvp", mvp);
+        //     lightingShader.setUniformMat4("u_model", model_i);
+        //     lightingShader.setUniformMat4("u_modelIT", modelIT);
+        //     lightingShader.setUniformFloat3("u_viewPos", camera.position);
             
-            cube.draw();
-        }
+        //     //cube.draw(lightingShader);
+        //     backpack.draw(lightingShader);
+        // }
 
         lightingShader.use();
         spotLight.setPosition(camera.position);
@@ -279,16 +292,16 @@ int main(void)
         //lightingShader.setUniformFloat3("u_spotLights[0].position", camera.position);
 
 
-        /* Draw Light */
-        for (int i = 0; i < pointLightPositions.size(); i++)
-        {
-            lightSourceShader.use();
-            glm::mat4 lightModel = glm::translate(model, pointLightPositions[i]);
-            lightModel = glm::scale(lightModel, glm::vec3(0.2f));
-            mvp = projection * view * lightModel;
-            lightSourceShader.setUniformMat4("u_mvp", mvp);
-            lightCube.draw();
-        }
+        // /* Draw Light */
+        // for (int i = 0; i < pointLightPositions.size(); i++)
+        // {
+        //     lightSourceShader.use();
+        //     glm::mat4 lightModel = glm::translate(model, pointLightPositions[i]);
+        //     lightModel = glm::scale(lightModel, glm::vec3(0.2f));
+        //     mvp = projection * view * lightModel;
+        //     lightSourceShader.setUniformMat4("u_mvp", mvp);
+        //     lightCube.draw(lightSourceShader);
+        // }
 
         if (spotLightOn)
         {
