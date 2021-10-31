@@ -54,6 +54,8 @@ struct Attenuation
     float quadratic;
 };
 
+const Attenuation CONST_ATTENUATION{1.0f, 0.09f, 0.032f};
+
 class PointLight: public Light
 {
 public:
