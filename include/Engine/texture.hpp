@@ -3,24 +3,31 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image/stb_image.h"
 
+// TODO TextureType??? Enum for diffuse, specular etc
+enum TextureType
+{
+    DIFFUSE,
+    SPECULAR
+};
+
 class Texture
 {
 public:
-    Texture(const char* path, const char* uniformName, unsigned int texColorChannnels);
+    Texture(const char* path, TextureType type);
 
-    unsigned int getID();
-    const char* getUniformName();
-    const char* getPath();
+    unsigned int getID() { return _ID; }
+    TextureType getType() { return _type; }
+    const char* getPath() { return _path; }
 private:
     unsigned int _ID;
-    const char* _uniformName;
+    TextureType _type;
     const char* _path;
 };
 
-Texture::Texture(const char* path, const char* uniformName, unsigned int texColorChannels = GL_RGB)
+Texture::Texture(const char* path, TextureType type)
 {
     _path = path;
-    _uniformName = uniformName;
+    _type = type;
     /* Initialize Texture */
     // Load image data
     int imWidth, imHeight, imChannels;
@@ -37,7 +44,15 @@ Texture::Texture(const char* path, const char* uniformName, unsigned int texColo
     // Use image data as texture
     if (data)
     {
-        glTexImage2D(GL_TEXTURE_2D, 0, texColorChannels, imWidth, imHeight, 0, texColorChannels, GL_UNSIGNED_BYTE, data);
+        GLenum format;
+        if (imChannels == 1)
+            format = GL_RED;
+        else if (imChannels == 3)
+            format = GL_RGB;
+        else if (imChannels == 4)
+            format = GL_RGBA;
+
+        glTexImage2D(GL_TEXTURE_2D, 0, format, imWidth, imHeight, 0, format, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
     }
     else
@@ -45,19 +60,4 @@ Texture::Texture(const char* path, const char* uniformName, unsigned int texColo
         std::cout << "Failed to load texture image data:" << stbi_failure_reason() << std::endl;
     }
     stbi_image_free(data);
-}
-
-unsigned int Texture::getID()
-{
-    return _ID;
-}
-
-const char* Texture::getUniformName()
-{
-    return _uniformName;
-}
-
-const char* Texture::getPath()
-{
-    return _path;
 }

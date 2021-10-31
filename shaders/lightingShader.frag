@@ -2,8 +2,24 @@
 
 struct Material
 {
-    sampler2D diffuse;
-    sampler2D specular;
+    // Diffuse textures
+    sampler2D texture_diffuse1;
+    sampler2D texture_diffuse2;
+    sampler2D texture_diffuse3;
+    sampler2D texture_diffuse4;
+    sampler2D texture_diffuse5;
+    sampler2D texture_diffuse6;
+    sampler2D texture_diffuse7;
+    sampler2D texture_diffuse8;
+    // Specular textures
+    sampler2D texture_specular1;
+    sampler2D texture_specular2;
+    sampler2D texture_specular3;
+    sampler2D texture_specular4;
+    sampler2D texture_specular5;
+    sampler2D texture_specular6;
+    sampler2D texture_specular7;
+    sampler2D texture_specular8;
     float     shininess;
 };
 
@@ -69,8 +85,8 @@ vec3 CalculateSpotLight(SpotLight light, vec3 normal, vec3 viewDir, vec3 diffuse
 void main()
 {
     // Map values
-    vec3 diffuseMapValues = (texture(u_material.diffuse, vertTexCoord)).rgb;
-    vec3 specularMapValues = (texture(u_material.specular, vertTexCoord)).rgb;
+    vec3 diffuseMapValues = (texture(u_material.texture_diffuse1, vertTexCoord)).rgb;
+    vec3 specularMapValues = (texture(u_material.texture_specular1, vertTexCoord)).rgb;
     
     // Light calculations
     vec3 norm = normalize(vertNorm);
