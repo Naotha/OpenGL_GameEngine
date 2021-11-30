@@ -35,7 +35,7 @@ public:
 
     void setLightInShader(std::string uniformLightName, Shader& shader) final override
     {
-        shader.use();
+        shader.bind();
         shader.setUniformFloat3((uniformLightName + ".direction").c_str(), _direction);
 
         shader.setUniformFloat3((uniformLightName + ".ambient").c_str(), _ambient);
@@ -80,7 +80,7 @@ public:
 
     void setLightInShader(std::string uniformLightName, Shader& shader) final override
     {
-        shader.use();
+        shader.bind();
         shader.setUniformFloat3((uniformLightName + ".position").c_str(), _position);
 
         shader.setUniformFloat((uniformLightName + ".constant").c_str(), _attenuation.constant);
@@ -129,7 +129,7 @@ public:
 
     void setLightInShader(std::string uniformLightName, Shader& shader) final override
     {
-        shader.use();
+        shader.bind();
         shader.setUniformFloat3((uniformLightName + ".position").c_str(), _position);
         shader.setUniformFloat3((uniformLightName + ".direction").c_str(), _direction);
 

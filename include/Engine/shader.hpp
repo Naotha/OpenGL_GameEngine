@@ -15,7 +15,7 @@ public:
     // Constructor reads and builds the shader
     Shader(const char* vertexPath, const char* fragmentPath);
     // Activates the shader
-    void use() const;
+    void bind() const;
     void unbind() const;
     // Setters for Uniform Values
     void setUniformInt(const char* name, int value);
@@ -118,7 +118,7 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath)
     glDeleteShader(fragmentShader);
 }
 
-void Shader::use() const
+void Shader::bind() const
 {
     glUseProgram(_ID);
 }

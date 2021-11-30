@@ -190,13 +190,13 @@ int main(void)
     //Model nano("./models/nanosuit/nanosuit.obj");
     Model backpack("./models/backpack/backpack.obj");
     /* Light */
-    lightingShader.use();
+    lightingShader.bind();
     lightingShader.setUniformFloat("u_material.shininess", 32.0f);
     glm::vec3 lightPos(1.0f, 1.0f, 1.0f);
     glm::vec3 lightCol(1.0f, 1.0f, 1.0f);
     glm::vec3 ambientCol = lightCol * glm::vec3(0.2f);
     glm::vec3 diffuseCol = lightCol * glm::vec3(0.8f);
-    lightSourceShader.use();
+    lightSourceShader.bind();
     lightSourceShader.setUniformFloat3("u_lightCol", lightCol);
 
     /* Transformation Matrices */
@@ -208,7 +208,7 @@ int main(void)
 
     SpotLight spotLight(camera.position, camera.getFront(), glm::cos(glm::radians(12.5f)), glm::cos(glm::radians(17.5f)), CONST_ATTENUATION, ambientCol, diffuseCol, lightCol);
     spotLight.setLightInShader("u_spotLights[0]", lightingShader);
-    lightingShader.use();
+    lightingShader.bind();
     lightingShader.setUniformInt("u_spotLightsNum", 1);
 
     std::vector<glm::vec3> cubePositions{
@@ -233,7 +233,7 @@ int main(void)
     pointLight1.setLightInShader("u_pointLights[0]", lightingShader);
     PointLight pointLight2(pointLightPositions[1], CONST_ATTENUATION, ambientCol, diffuseCol, lightCol);
     pointLight2.setLightInShader("u_pointLights[1]", lightingShader);
-    lightingShader.use();
+    lightingShader.bind();
     lightingShader.setUniformInt("u_pointLightsNum", 2);
 
     /* Loop until the user closes the window - Render Loop */
@@ -256,7 +256,7 @@ int main(void)
 
         /* Draw Objects */
         glm::mat4 mvp;
-        lightingShader.use();
+        lightingShader.bind();
         glm::mat4 model_i = glm::translate(model, cubePositions[0]);
         mvp = projection * view * model_i;
         glm::mat4 modelIT = glm::transpose(glm::inverse(model_i));
@@ -269,7 +269,7 @@ int main(void)
         // glm::mat4 mvp;
         // for (int i = 0; i < cubePositions.size(); i++)
         // {
-        //     lightingShader.use();
+        //     lightingShader.bind();
 
         //     glm::mat4 model_i = glm::translate(model, cubePositions[i]);
         //     mvp = projection * view * model_i;
@@ -284,7 +284,7 @@ int main(void)
         //     backpack.draw(lightingShader);
         // }
 
-        lightingShader.use();
+        lightingShader.bind();
         spotLight.setPosition(camera.position);
         spotLight.setDirection(camera.getFront());
         //std::cout << camera.getFront().x << camera.getFront().y << camera.getFront().z << std::endl;
@@ -295,7 +295,7 @@ int main(void)
         // /* Draw Light */
         // for (int i = 0; i < pointLightPositions.size(); i++)
         // {
-        //     lightSourceShader.use();
+        //     lightSourceShader.bind();
         //     glm::mat4 lightModel = glm::translate(model, pointLightPositions[i]);
         //     lightModel = glm::scale(lightModel, glm::vec3(0.2f));
         //     mvp = projection * view * lightModel;
@@ -305,12 +305,12 @@ int main(void)
 
         if (spotLightOn)
         {
-            lightingShader.use();
+            lightingShader.bind();
             lightingShader.setUniformInt("u_spotLightsNum", 1);
         }
         else
         {
-            lightingShader.use();
+            lightingShader.bind();
             lightingShader.setUniformInt("u_spotLightsNum", 0);
         } 
 
