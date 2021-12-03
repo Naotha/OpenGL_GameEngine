@@ -236,11 +236,30 @@ int main(void)
     lightingShader.bind();
     lightingShader.setUniformInt("u_pointLightsNum", 2);
 
+    double currentFrame = 0;
+    double lastFrame = currentFrame;
+    double deltaTime;
+    double frameTime = 0;
+    int fps = 0;
+
     /* Loop until the user closes the window - Render Loop */
     while (!glfwWindowShouldClose(window))
     {
         /* User inputs */
         processInput(window);
+
+        // FPS counter
+        currentFrame = glfwGetTime();
+        deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame;
+        frameTime += deltaTime;
+        fps++;
+        if (frameTime > 1)
+        {
+            std::cout << fps << std::endl;
+            fps = 0;
+            frameTime = 0;
+        }
         
         /* Camera Calculations */
         glm::mat4 projection = glm::perspective(glm::radians(camera.fov),
