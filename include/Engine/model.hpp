@@ -5,6 +5,8 @@
 #include <iostream>
 #include "glm/glm.hpp"
 
+#include "json/json.hpp"
+
 #include "assimp/Importer.hpp"
 #include "assimp/scene.h"
 #include "assimp/postprocess.h"
@@ -16,21 +18,49 @@
 class Model
 {
 public:
-    Model(const char* path) { _loadModel(path); }
-
+    Model(const std::string path);
     void draw(Shader& shader);
-private:
-    std::vector<Mesh> _meshes;
-    std::string _directory;
-    std::vector<Texture> _loadedTextures;
 
-    void _loadModel(std::string path);
+private:
+    // Common
+    std::vector<Mesh> _meshes;
+    std::vector<Texture> _loadedTextures;
+    std::string _directory;
+
+    // For OBJ
+    void _loadModelOBJ(std::string path);
     void _processNode(aiNode* node, const aiScene* scene);
     Mesh _processMesh(aiMesh* mesh, const aiScene* scene);
     std::vector<Texture> _loadMaterialTextures(aiMaterial* material, aiTextureType type, TextureType typeName);
+
+    // For GLTF
+    std::vector<unsigned char> data;
+    nlohmann::json JSON;
+
+
+    void _loadModelGLTF(std::string path) {};
 };
 
-void Model::_loadModel(std::string path)
+Model::Model(const std::string path)
+{
+    std::string format = path.substr(path.size() - 3);
+    if (format == "obj")
+    {
+        _loadModelOBJ(path);
+        return;
+    }
+
+    format = path.substr(path.size() - 4);
+    if (format == "gltf")
+    {
+        _loadModelGLTF(path);
+        return;
+    }
+
+    std::cout << "Failed to load model data: " << "Unsopported file format" << std::endl;
+}
+
+void Model::_loadModelOBJ(std::string path)
 {
     
     Assimp::Importer importer;
