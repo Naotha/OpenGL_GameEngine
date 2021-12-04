@@ -6,6 +6,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include <ImGui/imgui.h>
+#include <ImGui/ImGuizmo.h>
 #include <ImGui/backends/imgui_impl_glfw.h>
 #include <ImGui/backends/imgui_impl_opengl3.h>
 
@@ -30,7 +31,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 void calculateDeltaTime();
 
 /* Window, cursor */
-unsigned short windowWidth = 800;
+unsigned short windowWidth = 1000;
 unsigned short windowHeight = 600;
 float lastX = windowWidth / 2;
 float lastY = windowHeight / 2;
@@ -45,7 +46,7 @@ float lastFrame = 0.0f;
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
 
 /* Light */
-bool spotLightOn = true;
+bool spotLightOn = false;
 
 /* Vertices */
 std::vector<Vertex> triangleVertices = {
@@ -153,6 +154,18 @@ int main(void)
 
     /* Make the window's context current */
     glfwMakeContextCurrent(window);
+
+    /// SETUP IMGUI
+    // Setup Dear ImGui context
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO &io = ImGui::GetIO();
+    io.ConfigWindowsMoveFromTitleBarOnly=true;
+    // Setup Platform/Renderer bindings
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init();
+    // Setup Dear ImGui style
+    ImGui::StyleColorsDark();
     
     /// SETUP OPENGL
     /* Initialize GLAD */
@@ -247,7 +260,6 @@ int main(void)
     /* Loop until the user closes the window - Render Loop */
     while (!glfwWindowShouldClose(window))
     {
-        /* User inputs */
         processInput(window);
 
         // FPS counter
@@ -268,21 +280,38 @@ int main(void)
                                                 (float)windowWidth / (float)windowHeight,
                                                 0.1f, 100.0f);
         glm::mat4 view = camera.getViewMatrix();
-        
 
-        /* Rendering */
-        // glClearColor(0.1f,0.4f,0.6f, 1.0f);
-        glClearColor(0.1f,0.1f,0.1f, 1.0f);
+        unsigned int fbo;
+        glGenFramebuffers(1, &fbo);
+        glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+
+        unsigned int texture;
+        glGenTextures(1, &texture);
+        glBindTexture(GL_TEXTURE_2D, texture);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 800, 600, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);  
+
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0); 
+        GLuint depthrenderbuffer;
+        glGenRenderbuffers(1, &depthrenderbuffer);
+        glBindRenderbuffer(GL_RENDERBUFFER, depthrenderbuffer);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, 800, 600);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthrenderbuffer);
+
+        glBindFramebuffer(GL_FRAMEBUFFER,fbo);
+        glViewport(0, 0, windowWidth, windowHeight);
+        /// Rendering
+        glClearColor(0.1f,0.1f,0.1f, 0.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
         /* Draw Objects */
         glm::mat4 mvp;
         lightingShader.bind();
-        glm::mat4 model_i = glm::translate(model, cubePositions[0]);
-        mvp = projection * view * model_i;
-        glm::mat4 modelIT = glm::transpose(glm::inverse(model_i));
+        //glm::mat4 model_i = glm::translate(model, cubePositions[0]);
+        mvp = projection * view * model;
+        glm::mat4 modelIT = glm::transpose(glm::inverse(model));
         lightingShader.setUniformMat4("u_mvp", mvp);
-        lightingShader.setUniformMat4("u_model", model_i);
+        lightingShader.setUniformMat4("u_model", model);
         lightingShader.setUniformMat4("u_modelIT", modelIT);
         lightingShader.setUniformFloat3("u_viewPos", camera.position);
         
@@ -293,21 +322,7 @@ int main(void)
         lightingShader.bind();
         spotLight.setPosition(camera.position);
         spotLight.setDirection(camera.getFront());
-        //std::cout << camera.getFront().x << camera.getFront().y << camera.getFront().z << std::endl;
         spotLight.setLightInShader("u_spotLights[0]", lightingShader);
-        //lightingShader.setUniformFloat3("u_spotLights[0].position", camera.position);
-
-
-        // /* Draw Light */
-        // for (int i = 0; i < pointLightPositions.size(); i++)
-        // {
-        //     lightSourceShader.bind();
-        //     glm::mat4 lightModel = glm::translate(model, pointLightPositions[i]);
-        //     lightModel = glm::scale(lightModel, glm::vec3(0.2f));
-        //     mvp = projection * view * lightModel;
-        //     lightSourceShader.setUniformMat4("u_mvp", mvp);
-        //     lightCube.draw(lightSourceShader);
-        // }
 
         if (spotLightOn)
         {
@@ -318,7 +333,36 @@ int main(void)
         {
             lightingShader.bind();
             lightingShader.setUniformInt("u_spotLightsNum", 0);
-        } 
+        }
+        glBindFramebuffer(GL_FRAMEBUFFER,0);
+
+        /* ImGUI */
+        // feed inputs to dear imgui, start new frame
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+        ImGui::Begin("Render");
+
+        ImGuizmo::SetOrthographic(false);
+        ImGuizmo::BeginFrame();
+        ImGuizmo::Enable(true);
+        ImGuizmo::SetDrawlist();
+        ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, windowWidth, windowHeight);
+        
+        ImVec2 pos = ImGui::GetCursorScreenPos();
+        ImGui::GetWindowDrawList()->AddImage((void*)texture, ImVec2(ImGui::GetCursorScreenPos()),
+                                             ImVec2(ImGui::GetCursorScreenPos().x + 800, ImGui::GetCursorScreenPos().y + 600),
+                                             ImVec2(0, 1), ImVec2(1, 0));
+        
+        //ImGuizmo::DrawGrid(&view[0][0], &projection[0][0], glm::value_ptr(glm::mat4(1)), 200.0f);
+        ImGuizmo::Manipulate(glm::value_ptr(view), glm::value_ptr(projection),
+                             ImGuizmo::OPERATION::TRANSLATE, ImGuizmo::LOCAL, glm::value_ptr(model));
+        ImGui::End();
+        ImGui::Begin("Parameters");
+        ImGui::End();
+
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
         /* Poll for and process events */
         glfwPollEvents();
