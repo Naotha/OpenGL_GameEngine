@@ -163,7 +163,7 @@ int main(void)
     }
 
     /* GL Enable */
-    glEnable(GL_CULL_FACE);
+    //glEnable(GL_CULL_FACE);
     glEnable(GL_BLEND);
     glEnable(GL_DEPTH_TEST);
 
@@ -190,7 +190,7 @@ int main(void)
 
     //Model nano("./models/nanosuit/nanosuit.obj");
     //Model* backpack = ModelLoader::LoadModel("./models/backpack/backpack.obj");
-    Model* shiba = ModelLoader::LoadModel("./models/shiba/scene.gltf");
+    Model* testModel = ModelLoader::LoadModel("./models/shiba/scene.gltf");
     /* Light */
     lightingShader.bind();
     lightingShader.setUniformFloat("u_material.shininess", 32.0f);
@@ -288,7 +288,7 @@ int main(void)
         
         /* Models */
         //backpack->draw(lightingShader);
-        shiba->draw(lightingShader);
+        testModel->draw(lightingShader);
 
         lightingShader.bind();
         spotLight.setPosition(camera.position);

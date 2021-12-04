@@ -75,11 +75,10 @@ void ModelGLTF::_loadModelGLTF()
 std::string ModelGLTF::_readInFile(std::string path)
 {
     std::string fileContent;
-    std::ifstream file;
+    std::ifstream file(path, std::ios::binary);
     file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
     try
     {
-        file.open(path);
         std::stringstream stream;
         stream << file.rdbuf();
         file.close();
@@ -145,7 +144,7 @@ void ModelGLTF::_processNode(unsigned int child, glm::mat4 matrix)
     // Calculate transformation
     glm::mat4 trans = glm::translate(glm::mat4(1.0f), translation);
     glm::mat4 rot = glm::mat4_cast(rotation);
-    glm::mat sc = glm::scale(glm::mat4(1.0f), scale);
+    glm::mat4 sc = glm::scale(glm::mat4(1.0f), scale);
     
     glm::mat4 transformation = matrix * mat * trans * rot * sc;
 
