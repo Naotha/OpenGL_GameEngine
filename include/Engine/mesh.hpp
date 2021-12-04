@@ -15,12 +15,11 @@ public:
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
     std::vector<Texture> textures;
-    glm::mat4 transform;
 
     Mesh(std::vector<Vertex>& vertices, std::vector<unsigned int>& indices);
     Mesh(std::vector<Vertex>& vertices, std::vector<unsigned int>& indices, std::vector<Texture>& textures);
 
-    void draw(Shader& shader, glm::mat4 transformation = glm::mat4(1));
+    void draw(Shader& shader);
 private:
     VAO _VAO;
 
@@ -64,7 +63,7 @@ void Mesh::_createBufferObjects()
     _EBO.unbind();
 }
 
-void Mesh::draw(Shader& shader, glm::mat4 transformation)
+void Mesh::draw(Shader& shader)
 {
     // Use Shader Program
     shader.bind();
@@ -90,8 +89,6 @@ void Mesh::draw(Shader& shader, glm::mat4 transformation)
         shader.setUniformInt(("u_material." + name + number).c_str(), i);
         glBindTexture(GL_TEXTURE_2D, textures[i].getID());
     }
-    // Activate transformation
-    shader.setUniformMat4("m4_model", transformation);
     // Draw
     _VAO.bind();
     glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);

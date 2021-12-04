@@ -4,6 +4,7 @@
 #include <vector>
 #include <iostream>
 #include <sstream>
+#include <algorithm>
 #include "glm/glm.hpp"
 
 #include "json/json.hpp"
@@ -20,10 +21,13 @@ public:
     void draw(Shader& shader) override
     {
         for (int i = 0; i < _meshes.size(); i++)
-        {
+        {   
+            shader.bind();
+            //TODO Make better transformation system
             glm::mat4 modelIT = glm::transpose(glm::inverse(_transformations[i]));
             shader.setUniformMat4("u_model", _transformations[i]);
             shader.setUniformMat4("u_modelIT", modelIT);
+            shader.unbind();
             _meshes[i].draw(shader);
         }
     }
@@ -147,6 +151,8 @@ void ModelGLTF::_processNode(unsigned int child, glm::mat4 matrix)
     glm::mat4 sc = glm::scale(glm::mat4(1.0f), scale);
     
     glm::mat4 transformation = matrix * mat * trans * rot * sc;
+    //TODO Something is wrong with rotation, figure out why
+    transformation = glm::rotate(transformation, glm::radians(90.0f), glm::vec3(0, 0, 1));
 
     // Get mesh
     if (node.find("mesh") != node.end())
@@ -268,7 +274,7 @@ std::vector<unsigned int> ModelGLTF::_getIndices(nlohmann::json accessor)
             indices.push_back((unsigned int)value);
         }
     }
-
+    std::reverse(indices.begin(), indices.end());
     return indices;
 }
 
@@ -276,7 +282,7 @@ std::vector<glm::vec2> ModelGLTF::_groupFloatsVec2(std::vector<float> floats)
 {
     std::vector<glm::vec2> vecs;
     for (int i = 0; i < floats.size(); i)
-        vecs.push_back(glm::vec2(floats[i++], floats[i++]));
+        vecs.push_back(glm::mat2(0.0f, -1.0f, 1.0f, 0.0f) * glm::vec2(floats[i++], floats[i++]));
     return vecs;
 }
 
