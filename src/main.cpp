@@ -19,6 +19,7 @@
 #include "Engine/material.h"
 #include "Engine/light.hpp"
 #include "Engine/model.hpp"
+#include "Engine/modelLoader.hpp"
 
 
 void frambuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -188,7 +189,8 @@ int main(void)
     Mesh lightCube(cubeVertices, cubeIndices);
 
     //Model nano("./models/nanosuit/nanosuit.obj");
-    Model backpack("./models/backpack/backpack.obj");
+    //Model* backpack = ModelLoader::LoadModel("./models/backpack/backpack.obj");
+    Model* shiba = ModelLoader::LoadModel("./models/shiba/scene.gltf");
     /* Light */
     lightingShader.bind();
     lightingShader.setUniformFloat("u_material.shininess", 32.0f);
@@ -283,25 +285,10 @@ int main(void)
         lightingShader.setUniformMat4("u_model", model_i);
         lightingShader.setUniformMat4("u_modelIT", modelIT);
         lightingShader.setUniformFloat3("u_viewPos", camera.position);
-        backpack.draw(lightingShader);
-        //nano.draw(lightingShader);
-        // glm::mat4 mvp;
-        // for (int i = 0; i < cubePositions.size(); i++)
-        // {
-        //     lightingShader.bind();
-
-        //     glm::mat4 model_i = glm::translate(model, cubePositions[i]);
-        //     mvp = projection * view * model_i;
-        //     glm::mat4 modelIT = glm::transpose(glm::inverse(model_i));
-
-        //     lightingShader.setUniformMat4("u_mvp", mvp);
-        //     lightingShader.setUniformMat4("u_model", model_i);
-        //     lightingShader.setUniformMat4("u_modelIT", modelIT);
-        //     lightingShader.setUniformFloat3("u_viewPos", camera.position);
-            
-        //     //cube.draw(lightingShader);
-        //     backpack.draw(lightingShader);
-        // }
+        
+        /* Models */
+        //backpack->draw(lightingShader);
+        shiba->draw(lightingShader);
 
         lightingShader.bind();
         spotLight.setPosition(camera.position);
