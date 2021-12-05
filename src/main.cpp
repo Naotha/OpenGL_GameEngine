@@ -38,6 +38,12 @@ float lastY = windowHeight / 2;
 bool firstMouse = true;
 bool cameraMode = false;
 
+/* ImGUI */
+bool resized = true;
+bool translate = false;
+bool rotate = false;
+bool scale = false;
+
 /* Time */
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
@@ -161,11 +167,40 @@ int main(void)
     ImGui::CreateContext();
     ImGuiIO &io = ImGui::GetIO();
     io.ConfigWindowsMoveFromTitleBarOnly=true;
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+    auto& colors = ImGui::GetStyle().Colors;
+    colors[ImGuiCol_WindowBg] = ImVec4{ 0.1f, 0.1f, 0.1f, 1.0f };
+    colors[ImGuiCol_Header] = ImVec4{ 0.2f, 0.2f, 0.2f, 1.0f };
+    colors[ImGuiCol_HeaderHovered] = ImVec4{ 0.3f, 0.3f, 0.3f, 1.0f };
+    colors[ImGuiCol_HeaderActive] = ImVec4{ 0.15f, 0.15f, 0.15f, 1.0f };
+    colors[ImGuiCol_Button] = ImVec4{ 0.2f, 0.2f, 0.2f, 1.0f };
+    colors[ImGuiCol_ButtonHovered] = ImVec4{ 0.3f, 0.3f, 0.3f, 1.0f };
+    colors[ImGuiCol_ButtonActive] = ImVec4{ 0.15f, 0.15f, 0.15f, 1.0f };
+    colors[ImGuiCol_FrameBg] = ImVec4{ 0.2f, 0.2f, 0.2f, 1.0f };
+    colors[ImGuiCol_FrameBgHovered] = ImVec4{ 0.3f, 0.3f, 0.3f, 1.0f };
+    colors[ImGuiCol_FrameBgActive] = ImVec4{ 0.15f, 0.15f, 0.15f, 1.0f };
+    colors[ImGuiCol_Tab] = ImVec4{ 0.15f, 0.15f, 0.15f, 1.0f };
+    colors[ImGuiCol_TabHovered] = ImVec4{ 0.38f, 0.38f, 0.38f, 1.0f };
+    colors[ImGuiCol_TabActive] = ImVec4{ 0.28f, 0.28f, 0.28f, 1.0f };
+    colors[ImGuiCol_TabUnfocused] = ImVec4{ 0.15f, 0.15f, 0.15f, 1.0f };
+    colors[ImGuiCol_TabUnfocusedActive] = ImVec4{ 0.2f, 0.2f, 0.2f, 1.0f };
+    colors[ImGuiCol_TitleBg] = ImVec4{ 0.15f, 0.15f, 0.15f, 1.0f };
+    colors[ImGuiCol_TitleBgActive] = ImVec4{ 0.15f, 0.15f, 0.15f, 1.0f };
+    colors[ImGuiCol_TitleBgCollapsed] = ImVec4{ 0.15f, 0.15f, 0.15f, 1.0f };
+
+    ImGuiStyle& style = ImGui::GetStyle();
+    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+    {
+      style.WindowRounding = 0.0f;
+      style.Colors[ImGuiCol_WindowBg].w = 1.0f;
+    }
     // Setup Platform/Renderer bindings
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init();
+    float prevViewPanelX = windowWidth;
+    float prevViewPanelY = windowHeight;
     // Setup Dear ImGui style
-    ImGui::StyleColorsDark();
+    //ImGui::StyleColorsDark();
     
     /// SETUP OPENGL
     /* Initialize GLAD */
@@ -202,7 +237,7 @@ int main(void)
     Mesh lightCube(cubeVertices, cubeIndices);
 
     //Model nano("./models/nanosuit/nanosuit.obj");
-    //Model* backpack = ModelLoader::LoadModel("./models/backpack/backpack.obj");
+    //Model* testModel = ModelLoader::LoadModel("./models/backpack/backpack.obj");
     Model* testModel = ModelLoader::LoadModel("./models/shiba/scene.gltf");
     /* Light */
     lightingShader.bind();
@@ -257,11 +292,27 @@ int main(void)
     double frameTime = 0;
     int fps = 0;
 
+    // Framebuffer
+    unsigned int fbo;
+    glGenFramebuffers(1, &fbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+    unsigned int texture;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, windowWidth, windowHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);  
+
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0); 
+    GLuint depthrenderbuffer;
+    glGenRenderbuffers(1, &depthrenderbuffer);
+    glBindRenderbuffer(GL_RENDERBUFFER, depthrenderbuffer);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, windowWidth, windowHeight);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthrenderbuffer);
+
     /* Loop until the user closes the window - Render Loop */
     while (!glfwWindowShouldClose(window))
     {
-        processInput(window);
-
         // FPS counter
         currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
@@ -275,45 +326,57 @@ int main(void)
             frameTime = 0;
         }
         
-        /* Camera Calculations */
-        glm::mat4 projection = glm::perspective(glm::radians(camera.fov),
-                                                (float)windowWidth / (float)windowHeight,
-                                                0.1f, 100.0f);
-        glm::mat4 view = camera.getViewMatrix();
+        /* ImGUI PRE RENDER */
+        // feed inputs to dear imgui, start new frame
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+        ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoTitleBar |
+        ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
+        ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus |
+        ImGuiWindowFlags_NoBackground;
 
-        unsigned int fbo;
-        glGenFramebuffers(1, &fbo);
-        glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+        ImGuiViewport* viewport = ImGui::GetMainViewport();
+        ImGui::SetNextWindowPos(viewport->Pos);
+        ImGui::SetNextWindowSize(viewport->Size);
+        ImGui::SetNextWindowViewport(viewport->ID);
 
-        unsigned int texture;
-        glGenTextures(1, &texture);
-        glBindTexture(GL_TEXTURE_2D, texture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 800, 600, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);  
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+        ImGui::Begin("InvisibleWindow", nullptr, windowFlags);
+        ImGui::PopStyleVar(3);
 
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0); 
-        GLuint depthrenderbuffer;
-        glGenRenderbuffers(1, &depthrenderbuffer);
-        glBindRenderbuffer(GL_RENDERBUFFER, depthrenderbuffer);
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, 800, 600);
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthrenderbuffer);
+        ImGuiID dockSpaceId = ImGui::GetID("InvisibleWindowDockSpace");
 
+        ImGui::DockSpace(dockSpaceId, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_PassthruCentralNode);
+        ImGui::End();
+        ImGui::Begin("Render");
+        ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
+
+        if ((viewportPanelSize.x < prevViewPanelX || viewportPanelSize.y < prevViewPanelY) ||
+            (viewportPanelSize.x > prevViewPanelX || viewportPanelSize.y > prevViewPanelY))
+        {
+            std::cout << "I am resized: X-" << viewportPanelSize.x << " Y-" << viewportPanelSize.y << std::endl;
+            glBindFramebuffer(GL_FRAMEBUFFER,fbo);
+            glBindTexture(GL_TEXTURE_2D, texture);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, viewportPanelSize.x, viewportPanelSize.y, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+            glBindTexture(GL_TEXTURE_2D, 0);
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0); 
+            glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, viewportPanelSize.x, viewportPanelSize.y);
+            glBindFramebuffer(GL_FRAMEBUFFER,0);
+            resized = false;
+            prevViewPanelX = viewportPanelSize.x;
+            prevViewPanelY = viewportPanelSize.y;
+        }
+
+        /// RENDER
         glBindFramebuffer(GL_FRAMEBUFFER,fbo);
-        glViewport(0, 0, windowWidth, windowHeight);
-        /// Rendering
-        glClearColor(0.1f,0.1f,0.1f, 0.0f);
+        glViewport(0, 0, viewportPanelSize.x, viewportPanelSize.y);
+        glClearColor(0.1f,0.1f,0.1f, 1.0f);
+        //glClearColor(1.0f,1.0f,1.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         /* Draw Objects */
-        glm::mat4 mvp;
-        lightingShader.bind();
-        //glm::mat4 model_i = glm::translate(model, cubePositions[0]);
-        mvp = projection * view * model;
-        glm::mat4 modelIT = glm::transpose(glm::inverse(model));
-        lightingShader.setUniformMat4("u_mvp", mvp);
-        lightingShader.setUniformMat4("u_model", model);
-        lightingShader.setUniformMat4("u_modelIT", modelIT);
-        lightingShader.setUniformFloat3("u_viewPos", camera.position);
         
         /* Models */
         //backpack->draw(lightingShader);
@@ -335,36 +398,83 @@ int main(void)
             lightingShader.setUniformInt("u_spotLightsNum", 0);
         }
         glBindFramebuffer(GL_FRAMEBUFFER,0);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        /* ImGUI */
-        // feed inputs to dear imgui, start new frame
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
-        ImGui::Begin("Render");
+        /* Camera Calculations */
+        glm::mat4 projection = glm::perspective(glm::radians(camera.fov),
+                                                viewportPanelSize.x / viewportPanelSize.y,
+                                                0.1f, 100.0f);
+        glm::mat4 view = camera.getViewMatrix();
+        glm::mat4 mvp;
+        lightingShader.bind();
+        //glm::mat4 model_i = glm::translate(model, cubePositions[0]);
+        mvp = projection * view * model;
+        glm::mat4 modelIT = glm::transpose(glm::inverse(model));
+        lightingShader.setUniformMat4("u_mvp", mvp);
+        lightingShader.setUniformMat4("u_model", model);
+        lightingShader.setUniformMat4("u_modelIT", modelIT);
+        lightingShader.setUniformFloat3("u_viewPos", camera.position);
 
-        ImGuizmo::SetOrthographic(false);
+        /* ImGUI RENDER */
+        //ImGuizmo::SetOrthographic(false);
         ImGuizmo::BeginFrame();
         ImGuizmo::Enable(true);
         ImGuizmo::SetDrawlist();
-        ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, windowWidth, windowHeight);
+        ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, viewportPanelSize.x, viewportPanelSize.y);
         
-        ImVec2 pos = ImGui::GetCursorScreenPos();
-        ImGui::GetWindowDrawList()->AddImage((void*)texture, ImVec2(ImGui::GetCursorScreenPos()),
-                                             ImVec2(ImGui::GetCursorScreenPos().x + 800, ImGui::GetCursorScreenPos().y + 600),
-                                             ImVec2(0, 1), ImVec2(1, 0));
-        
+        ImGui::Image((void *)(texture), ImVec2(viewportPanelSize.x, viewportPanelSize.y), ImVec2(0, 1), ImVec2(1, 0));
         //ImGuizmo::DrawGrid(&view[0][0], &projection[0][0], glm::value_ptr(glm::mat4(1)), 200.0f);
-        ImGuizmo::Manipulate(glm::value_ptr(view), glm::value_ptr(projection),
-                             ImGuizmo::OPERATION::TRANSLATE, ImGuizmo::LOCAL, glm::value_ptr(model));
+        if (translate)
+        {
+            ImGuizmo::Manipulate(glm::value_ptr(view), glm::value_ptr(projection),
+                                ImGuizmo::OPERATION::TRANSLATE, ImGuizmo::LOCAL, glm::value_ptr(model));
+        }
+        else if (rotate)
+        {
+            ImGuizmo::Manipulate(glm::value_ptr(view), glm::value_ptr(projection),
+                                ImGuizmo::OPERATION::ROTATE, ImGuizmo::LOCAL, glm::value_ptr(model));
+        }
+        else if (scale)
+        {
+            ImGuizmo::Manipulate(glm::value_ptr(view), glm::value_ptr(projection),
+                                ImGuizmo::OPERATION::SCALE, ImGuizmo::LOCAL, glm::value_ptr(model));
+        }
+
         ImGui::End();
         ImGui::Begin("Parameters");
+        if (ImGui::Button("Translate"))
+        {
+            translate = true;
+            rotate = false;
+            scale = false;
+        }
+        if (ImGui::Button("Rotate"))
+        {
+            translate = false;
+            rotate = true;
+            scale = false;
+        }
+        if (ImGui::Button("Scale"))
+        {
+            translate = false;
+            rotate = false;
+            scale = true;
+        }
         ImGui::End();
 
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+        {
+            GLFWwindow* backup_current_context = glfwGetCurrentContext();
+            ImGui::UpdatePlatformWindows();
+            ImGui::RenderPlatformWindowsDefault();
+            glfwMakeContextCurrent(backup_current_context);
+        }
 
+        /// POST RENDER
         /* Poll for and process events */
+        processInput(window);
         glfwPollEvents();
         /* Swap front and back buffers */
         glfwSwapBuffers(window);
@@ -380,6 +490,7 @@ void frambuffer_size_callback(GLFWwindow* window, int width, int height)
 {
     windowWidth = width;
     windowHeight = height;
+    resized = true;
     glViewport(0, 0, width, height);
 }
 
