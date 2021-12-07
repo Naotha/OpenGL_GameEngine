@@ -14,6 +14,7 @@
 #include <iostream>
 #include <vector>
 
+#include "Engine/FBO.hpp"
 #include "Engine/shader.hpp"
 #include "Engine/texture.hpp"
 #include "Engine/mesh.hpp"
@@ -226,29 +227,29 @@ int main(void)
         return -1;
     
     /* Initialize Shaders */
-    Shader lightingShader("./shaders/lightingShader.vert", "./shaders/lightingShader.frag");
+    Shader shader("./shaders/standardShader.vert", "./shaders/standardShader.frag");
 
     //Model* testModel = ModelLoader::LoadModel("./models/backpack/backpack.obj");
     Model* testModel = ModelLoader::LoadModel("./models/shiba/scene.gltf");
 
     /* Light */
-    lightingShader.bind();
-    lightingShader.setUniformFloat("u_material.shininess", 32.0f);
+    shader.bind();
+    shader.setUniformFloat("u_material.shininess", 32.0f);
     glm::vec3 lightPos(1.0f, 1.0f, 1.0f);
     glm::vec3 lightCol(1.0f, 1.0f, 1.0f);
     glm::vec3 ambientCol = lightCol * glm::vec3(0.2f);
     glm::vec3 diffuseCol = lightCol * glm::vec3(0.8f);
-    lightingShader.unbind();
+    shader.unbind();
 
     // Light Types
     DirectionalLight dirLight(-lightPos, ambientCol, diffuseCol, lightCol);
-    dirLight.setLightInShader("u_dirLight", lightingShader);
+    dirLight.setLightInShader("u_dirLight", shader);
 
     SpotLight spotLight(camera.position, camera.getFront(), glm::cos(glm::radians(12.5f)), glm::cos(glm::radians(17.5f)), CONST_ATTENUATION, ambientCol, diffuseCol, lightCol);
-    spotLight.setLightInShader("u_spotLights[0]", lightingShader);
-    lightingShader.bind();
-    lightingShader.setUniformInt("u_spotLightsNum", 1);
-    lightingShader.unbind();
+    spotLight.setLightInShader("u_spotLights[0]", shader);
+    shader.bind();
+    shader.setUniformInt("u_spotLightsNum", 1);
+    shader.unbind();
 
     /* Transformation Matrices */
     glm::mat4 model = glm::mat4(1.0f);
@@ -261,22 +262,7 @@ int main(void)
     int fps = 0;
 
     // Framebuffer
-    unsigned int fbo;
-    glGenFramebuffers(1, &fbo);
-    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-    unsigned int texture;
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, windowWidth, windowHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);  
-
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0); 
-    GLuint depthrenderbuffer;
-    glGenRenderbuffers(1, &depthrenderbuffer);
-    glBindRenderbuffer(GL_RENDERBUFFER, depthrenderbuffer);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, windowWidth, windowHeight);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthrenderbuffer);
+    FBO fbo(windowWidth, windowHeight);
 
     /* Loop until the user closes the window - Render Loop */
     while (!glfwWindowShouldClose(window))
@@ -322,13 +308,7 @@ int main(void)
             (viewportPanelSize.x > prevViewPanelX || viewportPanelSize.y > prevViewPanelY))
         {
             std::cout << "I am resized: X-" << viewportPanelSize.x << " Y-" << viewportPanelSize.y << std::endl;
-            glBindFramebuffer(GL_FRAMEBUFFER,fbo);
-            glBindTexture(GL_TEXTURE_2D, texture);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,viewportPanelSize.x, viewportPanelSize.y, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-            glBindTexture(GL_TEXTURE_2D, 0);
-            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0); 
-            glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT,viewportPanelSize.x, viewportPanelSize.y);
-            glBindFramebuffer(GL_FRAMEBUFFER,0);
+            fbo.resize(viewportPanelSize.x, viewportPanelSize.y);
             resized = false;
             prevViewPanelX = viewportPanelSize.x;
             prevViewPanelY = viewportPanelSize.y;
@@ -336,32 +316,30 @@ int main(void)
 
         /// RENDER
         glViewport(0, 0, viewportPanelSize.x, viewportPanelSize.y);
-        glBindFramebuffer(GL_FRAMEBUFFER,fbo);
+        fbo.bind();
         glClearColor(0.1f,0.1f,0.1f, 1.0f);
-        //glClearColor(1.0f,1.0f,1.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         /* Draw Objects */
         
         /* Models */
-        //backpack->draw(lightingShader);
-        testModel->draw(lightingShader);
+        testModel->draw(shader);
 
-        lightingShader.bind();
+        shader.bind();
         spotLight.setPosition(camera.position);
         spotLight.setDirection(camera.getFront());
-        spotLight.setLightInShader("u_spotLights[0]", lightingShader);
+        spotLight.setLightInShader("u_spotLights[0]", shader);
 
         if (spotLightOn)
         {
-            lightingShader.bind();
-            lightingShader.setUniformInt("u_spotLightsNum", 1);
+            shader.bind();
+            shader.setUniformInt("u_spotLightsNum", 1);
         }
         else
         {
-            lightingShader.bind();
-            lightingShader.setUniformInt("u_spotLightsNum", 0);
+            shader.bind();
+            shader.setUniformInt("u_spotLightsNum", 0);
         }
-        glBindFramebuffer(GL_FRAMEBUFFER,0);
+        fbo.unbind();
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         /* Camera Calculations */
@@ -370,20 +348,20 @@ int main(void)
                                                 0.1f, 100.0f);
         glm::mat4 view = camera.getViewMatrix();
         glm::mat4 mvp;
-        lightingShader.bind();
+        shader.bind();
         mvp = projection * view * model;
         glm::mat4 modelIT = glm::transpose(glm::inverse(model));
-        lightingShader.setUniformMat4("u_mvp", mvp);
-        lightingShader.setUniformMat4("u_model", model);
-        lightingShader.setUniformMat4("u_modelIT", modelIT);
-        lightingShader.setUniformFloat3("u_viewPos", camera.position);
+        shader.setUniformMat4("u_mvp", mvp);
+        shader.setUniformMat4("u_model", model);
+        shader.setUniformMat4("u_modelIT", modelIT);
+        shader.setUniformFloat3("u_viewPos", camera.position);
 
         /* ImGUI RENDER */
         ImGuizmo::SetOrthographic(false);
         ImGuizmo::SetDrawlist();
         ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, ImGui::GetWindowWidth(), ImGui::GetWindowHeight());
         
-        ImGui::GetWindowDrawList()->AddImage((void *)(texture),
+        ImGui::GetWindowDrawList()->AddImage((void *)(fbo.texture),
                      ImVec2(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y), 
                      ImVec2(ImGui::GetWindowPos().x + ImGui::GetWindowWidth(),ImGui::GetWindowPos().y + ImGui::GetWindowHeight()), 
                      ImVec2(0, 1), ImVec2(1, 0));
