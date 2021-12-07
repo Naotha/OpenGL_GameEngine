@@ -22,12 +22,12 @@ public:
     {
         for (int i = 0; i < _meshes.size(); i++)
         {   
-            shader.bind();
-            //TODO Make better transformation system
-            glm::mat4 modelIT = glm::transpose(glm::inverse(_transformations[i]));
-            shader.setUniformMat4("u_model", _transformations[i]);
-            shader.setUniformMat4("u_modelIT", modelIT);
-            shader.unbind();
+            // shader.bind();
+            // //TODO Make better transformation system
+            // glm::mat4 modelIT = glm::transpose(glm::inverse(_transformations[i]));
+            // shader.setUniformMat4("u_model", _transformations[i]);
+            // shader.setUniformMat4("u_modelIT", modelIT);
+            // shader.unbind();
             _meshes[i].draw(shader);
         }
     }

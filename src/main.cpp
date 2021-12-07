@@ -4,6 +4,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/matrix_decompose.hpp>
 
 #include <ImGui/imgui.h>
 #include <ImGui/ImGuizmo.h>
@@ -54,21 +55,10 @@ Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
 /* Light */
 bool spotLightOn = false;
 
-/* Vertices */
-std::vector<Vertex> triangleVertices = {
-    // Postitions                      // Colors                        // Texture Coords
-    {glm::vec3(-0.5f, -0.5f,  0.0f),   glm::vec3(1.0f,  0.0f,  0.0f),   glm::vec2(0.0f, 0.0f)},  // Bottom Left
-    {glm::vec3( 0.5f, -0.5f,  0.0f),   glm::vec3(0.0f,  1.0f,  0.0f),   glm::vec2(1.0f, 0.0f)},  // Bottom Right
-    {glm::vec3( 0.0f,  0.5f,  0.0f),   glm::vec3(0.0f,  0.0f,  1.0f),   glm::vec2(0.5f, 1.0f)}   // Top 
-};
-
-std::vector<Vertex> squareVertices = {
-    // Positions                       // Colors                       // Texture Coords
-    {glm::vec3(-0.5f,  0.5f,  0.0f),   glm::vec3(1.0f,  0.0f,  0.0f),   glm::vec2(0.0f, 1.0f)},  // Top Left
-    {glm::vec3(-0.5f, -0.5f,  0.0f),   glm::vec3(0.0f,  1.0f,  0.0f),   glm::vec2(0.0f, 0.0f)},  // Bottom Left
-    {glm::vec3( 0.5f, -0.5f,  0.0f),   glm::vec3(0.0f,  0.0f,  1.0f),   glm::vec2(1.0f, 0.0f)},  // Bottom Right
-    {glm::vec3( 0.5f,  0.5f,  0.0f),   glm::vec3(0.0f,  1.0f,  1.0f),   glm::vec2(1.0f, 1.0f)}   // Top Right
-};
+/* Context */
+GLFWwindow* window;
+float prevViewPanelX = (float)windowWidth;
+float prevViewPanelY = (float)windowHeight;
 
 std::vector<Vertex> cubeVertices = {
     /* Front Face */
@@ -109,15 +99,6 @@ std::vector<Vertex> cubeVertices = {
     {glm::vec3( 0.5f,  0.5f, -0.5f),   glm::vec3( 1.0f,  0.0f,  0.0f),   glm::vec2(1.0f, 1.0f)},  // Top Right
 };
 
-std::vector<unsigned int> triangleIndices = {
-    0, 1, 2,
-};
-
-std::vector<unsigned int> squareIndices = {
-    0, 1, 2,
-    2, 3, 0
-};
-
 std::vector<unsigned int> cubeIndices = {
     // Front Face
      0,  1,  2,
@@ -139,29 +120,59 @@ std::vector<unsigned int> cubeIndices = {
     22, 23, 20,
 };
 
-int main(void)
+bool CreateGLFWContext()
 {
     /// SETUP GLFW
     /* Initialize the library */
     if (!glfwInit())
-        return -1;
+        return false;
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     /* Create a windowed mode window and its OpenGL context */
-    GLFWwindow* window = glfwCreateWindow(windowWidth, windowHeight, "OpenGL Engine", NULL, NULL);
+    window = glfwCreateWindow(windowWidth, windowHeight, "OpenGL Engine", NULL, NULL);
     if (!window)
     {
         std::cout << "Failed to create GLFW window" << std::endl;
         glfwTerminate();
-        return -1;
+        return false;
     }
 
     /* Make the window's context current */
     glfwMakeContextCurrent(window);
 
-    /// SETUP IMGUI
+    return true;
+}
+
+bool SetupOpenGL()
+{
+    /* Initialize GLAD */
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+    {
+        std::cout << "Failed to initialize GLAD" << std::endl;
+        return false;
+    }
+
+    /* GL Enable */
+    glEnable(GL_CULL_FACE);
+    glEnable(GL_BLEND);
+    glEnable(GL_DEPTH_TEST);
+
+    /* Set Viewport */
+    glViewport(0, 0, windowWidth, windowHeight);
+    glfwSetFramebufferSizeCallback(window, frambuffer_size_callback); // Change viewport when window is resized
+    
+    /* Set Mouse callbacks */
+    glfwSetCursorPosCallback(window, mouse_callback);
+    glfwSetScrollCallback(window, scroll_callback);
+    glfwSetKeyCallback(window, key_callback);
+
+    return true;
+}
+
+void CreateIMGUIContext()
+{
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -197,48 +208,29 @@ int main(void)
     // Setup Platform/Renderer bindings
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init();
-    float prevViewPanelX = windowWidth;
-    float prevViewPanelY = windowHeight;
-    // Setup Dear ImGui style
-    //ImGui::StyleColorsDark();
+    prevViewPanelX = windowWidth;
+    prevViewPanelY = windowHeight;
+}
+
+int main(void)
+{
+    /// SETUP GLFW
+    if(!CreateGLFWContext())
+        return -1;
+
+    /// SETUP IMGUI
+    CreateIMGUIContext();
     
     /// SETUP OPENGL
-    /* Initialize GLAD */
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-    {
-        std::cout << "Failed to initialize GLAD" << std::endl;
+    if(!SetupOpenGL())
         return -1;
-    }
-
-    /* GL Enable */
-    glEnable(GL_CULL_FACE);
-    glEnable(GL_BLEND);
-    glEnable(GL_DEPTH_TEST);
-
-    /* Set Viewport */
-    glViewport(0, 0, windowWidth, windowHeight);
-    glfwSetFramebufferSizeCallback(window, frambuffer_size_callback); // Change viewport when window is resized
-    
-    /* Set Mouse callbacks */
-    glfwSetCursorPosCallback(window, mouse_callback);
-    glfwSetScrollCallback(window, scroll_callback);
-    glfwSetKeyCallback(window, key_callback);
     
     /* Initialize Shaders */
     Shader lightingShader("./shaders/lightingShader.vert", "./shaders/lightingShader.frag");
-    Shader lightSourceShader("./shaders/lightSourceShader.vert", "./shaders/lightSourceShader.frag");
-    
-    /* Create Objects */
-    Texture diffuseMap("./textures/container.png", TextureType::DIFFUSE);
-    Texture specularMap("./textures/container_specular.png", TextureType::SPECULAR);
-    std::vector<Texture> cubeTextures = {diffuseMap, specularMap};
-    Mesh cube(cubeVertices, cubeIndices, cubeTextures);
 
-    Mesh lightCube(cubeVertices, cubeIndices);
-
-    //Model nano("./models/nanosuit/nanosuit.obj");
     //Model* testModel = ModelLoader::LoadModel("./models/backpack/backpack.obj");
     Model* testModel = ModelLoader::LoadModel("./models/shiba/scene.gltf");
+
     /* Light */
     lightingShader.bind();
     lightingShader.setUniformFloat("u_material.shininess", 32.0f);
@@ -246,11 +238,7 @@ int main(void)
     glm::vec3 lightCol(1.0f, 1.0f, 1.0f);
     glm::vec3 ambientCol = lightCol * glm::vec3(0.2f);
     glm::vec3 diffuseCol = lightCol * glm::vec3(0.8f);
-    lightSourceShader.bind();
-    lightSourceShader.setUniformFloat3("u_lightCol", lightCol);
-
-    /* Transformation Matrices */
-    glm::mat4 model = glm::mat4(1.0f);
+    lightingShader.unbind();
 
     // Light Types
     DirectionalLight dirLight(-lightPos, ambientCol, diffuseCol, lightCol);
@@ -260,32 +248,12 @@ int main(void)
     spotLight.setLightInShader("u_spotLights[0]", lightingShader);
     lightingShader.bind();
     lightingShader.setUniformInt("u_spotLightsNum", 1);
+    lightingShader.unbind();
 
-    std::vector<glm::vec3> cubePositions{
-        glm::vec3( 0.0f,  0.0f,  0.0f),
-        glm::vec3( 2.0f,  5.0f, -15.0f),
-        glm::vec3(-1.5f, -2.2f, -2.5f),
-        glm::vec3(-3.8f, -2.0f, -12.3f),
-        glm::vec3( 2.4f, -0.4f, -3.5f),
-        glm::vec3(-1.7f,  3.0f, -7.5f),
-        glm::vec3( 1.3f, -2.0f, -2.5f),
-        glm::vec3( 1.5f,  2.0f, -2.5f),
-        glm::vec3( 1.5f,  0.2f, -1.5f),
-        glm::vec3(-1.3f,  1.0f, -1.5f)
-    };
+    /* Transformation Matrices */
+    glm::mat4 model = glm::mat4(1.0f);
 
-    std::vector<glm::vec3> pointLightPositions{
-        glm::vec3( 0.0f,  0.0f, -3.0f),
-        glm::vec3(-4.0f,  2.0f, -12.0f)
-    };
-
-    PointLight pointLight1(pointLightPositions[0], CONST_ATTENUATION, ambientCol, diffuseCol, lightCol);
-    pointLight1.setLightInShader("u_pointLights[0]", lightingShader);
-    PointLight pointLight2(pointLightPositions[1], CONST_ATTENUATION, ambientCol, diffuseCol, lightCol);
-    pointLight2.setLightInShader("u_pointLights[1]", lightingShader);
-    lightingShader.bind();
-    lightingShader.setUniformInt("u_pointLightsNum", 2);
-
+    /* Init FrameRate Calculation */
     double currentFrame = 0;
     double lastFrame = currentFrame;
     double deltaTime;
@@ -340,18 +308,14 @@ int main(void)
         ImGui::SetNextWindowPos(viewport->Pos);
         ImGui::SetNextWindowSize(viewport->Size);
         ImGui::SetNextWindowViewport(viewport->ID);
-
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-        ImGui::Begin("InvisibleWindow", nullptr, windowFlags);
-        ImGui::PopStyleVar(3);
+        ImGui::Begin("InvisibleDockSpace", nullptr, windowFlags);
 
         ImGuiID dockSpaceId = ImGui::GetID("InvisibleWindowDockSpace");
 
         ImGui::DockSpace(dockSpaceId, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_PassthruCentralNode);
         ImGui::End();
         ImGui::Begin("Render");
+        ImGuizmo::BeginFrame();
         ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
 
         if ((viewportPanelSize.x < prevViewPanelX || viewportPanelSize.y < prevViewPanelY) ||
@@ -360,10 +324,10 @@ int main(void)
             std::cout << "I am resized: X-" << viewportPanelSize.x << " Y-" << viewportPanelSize.y << std::endl;
             glBindFramebuffer(GL_FRAMEBUFFER,fbo);
             glBindTexture(GL_TEXTURE_2D, texture);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, viewportPanelSize.x, viewportPanelSize.y, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,viewportPanelSize.x, viewportPanelSize.y, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
             glBindTexture(GL_TEXTURE_2D, 0);
             glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0); 
-            glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, viewportPanelSize.x, viewportPanelSize.y);
+            glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT,viewportPanelSize.x, viewportPanelSize.y);
             glBindFramebuffer(GL_FRAMEBUFFER,0);
             resized = false;
             prevViewPanelX = viewportPanelSize.x;
@@ -371,8 +335,8 @@ int main(void)
         }
 
         /// RENDER
-        glBindFramebuffer(GL_FRAMEBUFFER,fbo);
         glViewport(0, 0, viewportPanelSize.x, viewportPanelSize.y);
+        glBindFramebuffer(GL_FRAMEBUFFER,fbo);
         glClearColor(0.1f,0.1f,0.1f, 1.0f);
         //glClearColor(1.0f,1.0f,1.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -407,7 +371,6 @@ int main(void)
         glm::mat4 view = camera.getViewMatrix();
         glm::mat4 mvp;
         lightingShader.bind();
-        //glm::mat4 model_i = glm::translate(model, cubePositions[0]);
         mvp = projection * view * model;
         glm::mat4 modelIT = glm::transpose(glm::inverse(model));
         lightingShader.setUniformMat4("u_mvp", mvp);
@@ -416,61 +379,57 @@ int main(void)
         lightingShader.setUniformFloat3("u_viewPos", camera.position);
 
         /* ImGUI RENDER */
-        //ImGuizmo::SetOrthographic(false);
-        ImGuizmo::BeginFrame();
-        ImGuizmo::Enable(true);
+        ImGuizmo::SetOrthographic(false);
         ImGuizmo::SetDrawlist();
-        ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, viewportPanelSize.x, viewportPanelSize.y);
+        ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, ImGui::GetWindowWidth(), ImGui::GetWindowHeight());
         
-        ImGui::Image((void *)(texture), ImVec2(viewportPanelSize.x, viewportPanelSize.y), ImVec2(0, 1), ImVec2(1, 0));
-        //ImGuizmo::DrawGrid(&view[0][0], &projection[0][0], glm::value_ptr(glm::mat4(1)), 200.0f);
+        ImGui::GetWindowDrawList()->AddImage((void *)(texture),
+                     ImVec2(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y), 
+                     ImVec2(ImGui::GetWindowPos().x + ImGui::GetWindowWidth(),ImGui::GetWindowPos().y + ImGui::GetWindowHeight()), 
+                     ImVec2(0, 1), ImVec2(1, 0));
         if (translate)
         {
             ImGuizmo::Manipulate(glm::value_ptr(view), glm::value_ptr(projection),
-                                ImGuizmo::OPERATION::TRANSLATE, ImGuizmo::LOCAL, glm::value_ptr(model));
+                                ImGuizmo::OPERATION::TRANSLATE, ImGuizmo::WORLD, glm::value_ptr(model));
         }
         else if (rotate)
         {
             ImGuizmo::Manipulate(glm::value_ptr(view), glm::value_ptr(projection),
-                                ImGuizmo::OPERATION::ROTATE, ImGuizmo::LOCAL, glm::value_ptr(model));
+                                ImGuizmo::OPERATION::ROTATE, ImGuizmo::WORLD, glm::value_ptr(model));
         }
         else if (scale)
         {
             ImGuizmo::Manipulate(glm::value_ptr(view), glm::value_ptr(projection),
-                                ImGuizmo::OPERATION::SCALE, ImGuizmo::LOCAL, glm::value_ptr(model));
+                                ImGuizmo::OPERATION::SCALE, ImGuizmo::WORLD, glm::value_ptr(model));
         }
-
         ImGui::End();
+
         ImGui::Begin("Parameters");
         if (ImGui::Button("Translate"))
         {
-            translate = true;
+            translate = !translate;
             rotate = false;
             scale = false;
         }
         if (ImGui::Button("Rotate"))
         {
             translate = false;
-            rotate = true;
+            rotate = !rotate;
             scale = false;
         }
         if (ImGui::Button("Scale"))
         {
             translate = false;
             rotate = false;
-            scale = true;
+            scale = !scale;
+        }
+        if (ImGui::Button("Reset"))
+        {
+            model = glm::mat4(1.0f);
         }
         ImGui::End();
-
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-        if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-        {
-            GLFWwindow* backup_current_context = glfwGetCurrentContext();
-            ImGui::UpdatePlatformWindows();
-            ImGui::RenderPlatformWindowsDefault();
-            glfwMakeContextCurrent(backup_current_context);
-        }
 
         /// POST RENDER
         /* Poll for and process events */
