@@ -7,7 +7,7 @@ class ModelLoader
 public:
     static Model* LoadModel(std::string path)
     {
-        std::string format = path.substr(path.size() - 3);
+        std::string format = path.substr(path.size() - 4);
         if (format == "gltf")
         {
             return new ModelGLTF(path);

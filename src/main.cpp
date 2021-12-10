@@ -9,10 +9,12 @@
 #include <ImGui/imgui.h>
 #include <ImGui/ImGuizmo.h>
 #include <ImGui/backends/imgui_impl_glfw.h>
+#include <ImGui/filebrowser/imfilebrowser.h>
 #include <ImGui/backends/imgui_impl_opengl3.h>
 
 #include <iostream>
 #include <vector>
+#include <algorithm>
 
 #include "Engine/FBO.hpp"
 #include "Engine/shader.hpp"
@@ -60,6 +62,7 @@ bool spotLightOn = false;
 GLFWwindow* window;
 float prevViewPanelX = (float)windowWidth;
 float prevViewPanelY = (float)windowHeight;
+ImGui::FileBrowser fileDialog;
 
 std::vector<Vertex> cubeVertices = {
     /* Front Face */
@@ -211,6 +214,9 @@ void CreateIMGUIContext()
     ImGui_ImplOpenGL3_Init();
     prevViewPanelX = windowWidth;
     prevViewPanelY = windowHeight;
+
+    fileDialog.SetTitle("Load Model...");
+    fileDialog.SetTypeFilters({ ".gltf", ".obj" });
 }
 
 int main(void)
@@ -405,9 +411,31 @@ int main(void)
         {
             model = glm::mat4(1.0f);
         }
+
+        if (ImGui::Button("Load Model"))
+        {
+            fileDialog.Open();
+        }
+        fileDialog.Display();
+
+        std::string newModelPath = "";
+        if (fileDialog.HasSelected())
+        {
+            newModelPath = fileDialog.GetSelected().string();
+            fileDialog.ClearSelected();
+        }
         ImGui::End();
+
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+        if (newModelPath != "")
+        {
+            std::cout<<newModelPath<<std::endl;
+            delete(testModel);
+            std::replace( newModelPath.begin(), newModelPath.end(), '\\', '/');
+            testModel = ModelLoader::LoadModel(newModelPath);
+        }
 
         /// POST RENDER
         /* Poll for and process events */

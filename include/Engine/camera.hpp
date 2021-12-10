@@ -4,11 +4,11 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-const float DEFAULT_YAW = -90.0f;
-const float DEFAULT_PITCH = 0.0f;
-const float DEFAULT_SPEED = 2.5f;
-const float DEFAULT_SENSITIVITY = 0.1f;
-const float DEFAULT_FOV = 45.0f;
+const float default_yaw = -90.0f;
+const float default_pitch = 0.0f;
+const float default_speed = 2.5f;
+const float default_sensitivity = 0.1f;
+const float default_fov = 45.0f;
 
 enum CameraMovement
 {
@@ -46,7 +46,7 @@ private:
     void _updateCameraVectors();
 };
 
-Camera::Camera(glm::vec3 position, glm::vec3 worldUp = glm::vec3(0.0f, 1.0f, 0.0f), float yaw = DEFAULT_YAW, float pitch = DEFAULT_PITCH, float movementSpeed = DEFAULT_SPEED, float mouseSensitivity = DEFAULT_SENSITIVITY, float fov = DEFAULT_FOV)
+Camera::Camera(glm::vec3 position, glm::vec3 worldUp = glm::vec3(0.0f, 1.0f, 0.0f), float yaw = default_yaw, float pitch = default_pitch, float movementSpeed = default_speed, float mouseSensitivity = default_sensitivity, float fov = default_fov)
 {
     this->position = position;
     _front = glm::vec3(0.0f, 0.0f, -1.0f);
