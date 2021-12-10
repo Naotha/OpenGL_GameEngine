@@ -14,27 +14,27 @@
 #include "Engine/texture.hpp"
 #include "Engine/model.hpp"
 
-class ModelOBJ : public Model
+class ModelDefault : public Model
 {
 public:
-    ModelOBJ(const std::string path);
+    ModelDefault(const std::string path);
 
 private:
     std::vector<Texture> _loadedTextures;
     std::string _directory;
 
-    void _loadModelOBJ(std::string path);
+    void _loadModelDefault(std::string path);
     void _processNode(aiNode* node, const aiScene* scene);
     Mesh _processMesh(aiMesh* mesh, const aiScene* scene);
     std::vector<Texture> _loadMaterialTextures(aiMaterial* material, aiTextureType type, TextureType typeName);
 };
 
-ModelOBJ::ModelOBJ(const std::string path)
+ModelDefault::ModelDefault(const std::string path)
 {
-    _loadModelOBJ(path);
+    _loadModelDefault(path);
 }
 
-void ModelOBJ::_loadModelOBJ(std::string path)
+void ModelDefault::_loadModelDefault(std::string path)
 {
     
     Assimp::Importer importer;
@@ -50,7 +50,7 @@ void ModelOBJ::_loadModelOBJ(std::string path)
     _processNode(scene->mRootNode, scene);
 }
 
-void ModelOBJ::_processNode(aiNode* node, const aiScene* scene)
+void ModelDefault::_processNode(aiNode* node, const aiScene* scene)
 {
     // Process all Meshes in Node
     for (int i = 0; i < node->mNumMeshes; i++)
@@ -65,7 +65,7 @@ void ModelOBJ::_processNode(aiNode* node, const aiScene* scene)
     }
 }
 
-Mesh ModelOBJ::_processMesh(aiMesh* mesh, const aiScene* scene)
+Mesh ModelDefault::_processMesh(aiMesh* mesh, const aiScene* scene)
 {
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
@@ -125,7 +125,7 @@ Mesh ModelOBJ::_processMesh(aiMesh* mesh, const aiScene* scene)
     return Mesh(vertices, indices, textures);
 }
 
-std::vector<Texture> ModelOBJ::_loadMaterialTextures(aiMaterial* material, aiTextureType type, TextureType typeName)
+std::vector<Texture> ModelDefault::_loadMaterialTextures(aiMaterial* material, aiTextureType type, TextureType typeName)
 {
     std::vector<Texture> textures;
     int count = 0;

@@ -282,7 +282,7 @@ std::vector<glm::vec2> ModelGLTF::_groupFloatsVec2(std::vector<float> floats)
 {
     std::vector<glm::vec2> vecs;
     for (int i = 0; i < floats.size(); i)
-        vecs.push_back(glm::mat2(0.0f, -1.0f, 1.0f, 0.0f) * glm::vec2(floats[i++], floats[i++]));
+        vecs.push_back(glm::mat2(0.0f, -1.0f, 1.0f, 0.0f) * glm::vec2(floats[i++], floats[i++])); // TexCoords are rotated by 90 degrees for some reason
     return vecs;
 }
 
@@ -291,14 +291,6 @@ std::vector<glm::vec3> ModelGLTF::_groupFloatsVec3(std::vector<float> floats)
     std::vector<glm::vec3> vecs;
     for (int i = 0; i < floats.size(); i)
         vecs.push_back(glm::vec3(floats[i++], floats[i++], floats[i++]));
-    return vecs;
-}
-
-std::vector<glm::vec4> ModelGLTF::_groupFloatsVec4(std::vector<float> floats)
-{
-    std::vector<glm::vec4> vecs;
-    for (int i = 0; i < floats.size(); i)
-        vecs.push_back(glm::vec4(floats[i++], floats[i++], floats[i++], floats[i++]));
     return vecs;
 }
 

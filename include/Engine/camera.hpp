@@ -10,7 +10,7 @@ const float DEFAULT_SPEED = 2.5f;
 const float DEFAULT_SENSITIVITY = 0.1f;
 const float DEFAULT_FOV = 45.0f;
 
-enum Camera_Movement
+enum CameraMovement
 {
     FORWARD,
     BACKWARD,
@@ -28,7 +28,7 @@ public:
 
     Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch, float movementSpeed, float mouseSensitivity, float fov);
 
-    void processKeyboard(Camera_Movement direction, float deltaTime);
+    void processKeyboard(CameraMovement direction, float deltaTime);
     void processMouseMovement(float xOffset, float yOffset);
     void processMouseScroll(float yOffset);
 
@@ -74,7 +74,7 @@ void Camera::_updateCameraVectors()
     _up = glm::normalize(glm::cross(_right, _front));
 }
 
-void Camera::processKeyboard(Camera_Movement direction, float deltaTime)
+void Camera::processKeyboard(CameraMovement direction, float deltaTime)
 {
     float velocity = movementSpeed * deltaTime;
     if (direction == FORWARD)
