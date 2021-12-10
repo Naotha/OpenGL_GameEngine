@@ -374,17 +374,17 @@ int main(void)
         if (translate)
         {
             ImGuizmo::Manipulate(glm::value_ptr(view), glm::value_ptr(projection),
-                                ImGuizmo::OPERATION::TRANSLATE, ImGuizmo::WORLD, glm::value_ptr(model));
+                                ImGuizmo::OPERATION::TRANSLATE, ImGuizmo::LOCAL, glm::value_ptr(model));
         }
         else if (rotate)
         {
             ImGuizmo::Manipulate(glm::value_ptr(view), glm::value_ptr(projection),
-                                ImGuizmo::OPERATION::ROTATE, ImGuizmo::WORLD, glm::value_ptr(model));
+                                ImGuizmo::OPERATION::ROTATE, ImGuizmo::LOCAL, glm::value_ptr(model));
         }
         else if (scale)
         {
             ImGuizmo::Manipulate(glm::value_ptr(view), glm::value_ptr(projection),
-                                ImGuizmo::OPERATION::SCALE, ImGuizmo::WORLD, glm::value_ptr(model));
+                                ImGuizmo::OPERATION::SCALE, ImGuizmo::LOCAL, glm::value_ptr(model));
         }
         ImGui::End();
 
