@@ -1,4 +1,5 @@
-#pragma once
+#ifndef MODEL_GLTF_HPP
+#define MODEL_GLTF_HPP
 
 #include <string>
 #include <vector>
@@ -17,10 +18,10 @@
 class ModelGLTF : public Model
 {
 public:
-    ModelGLTF(const std::string path);
+    ModelGLTF(const std::string& path);
     void draw(Shader& shader) override
     {
-        for (int i = 0; i < _meshes.size(); i++)
+        for (auto & _mesh : _meshes)
         {   
             // shader.bind();
             // //TODO Make better transformation system
@@ -28,7 +29,7 @@ public:
             // shader.setUniformMat4("u_model", _transformations[i]);
             // shader.setUniformMat4("u_modelIT", modelIT);
             // shader.unbind();
-            _meshes[i].draw(shader);
+            _mesh.draw(shader);
         }
     }
     
@@ -45,21 +46,20 @@ private:
     void _processNode(unsigned int child, glm::mat4 matrix = glm::mat4(1.0f));
     void _loadMesh(unsigned int meshIndex);
 
-    std::string _readInFile(std::string path);
+    static std::string _readInFile(const std::string& path);
     std::vector<unsigned char> _getData();
 
     std::vector<float> _getFloats(nlohmann::json accessor);
     std::vector<unsigned int> _getIndices(nlohmann::json accessor);
 
-    std::vector<glm::vec2> _groupFloatsVec2(std::vector<float> floats);
-    std::vector<glm::vec3> _groupFloatsVec3(std::vector<float> floats);
-    std::vector<glm::vec4> _groupFloatsVec4(std::vector<float> floats);
+    static std::vector<glm::vec2> _groupFloatsVec2(std::vector<float> floats);
+    static std::vector<glm::vec3> _groupFloatsVec3(std::vector<float> floats);
 
-    std::vector<Vertex> _assembleVertices(std::vector<glm::vec3> positions, std::vector<glm::vec3> normals, std::vector<glm::vec2> texCoords);
+    static std::vector<Vertex> _assembleVertices(std::vector<glm::vec3> positions, std::vector<glm::vec3> normals, std::vector<glm::vec2> texCoords);
     std::vector<Texture> _getTextures();
 };
 
-ModelGLTF::ModelGLTF(const std::string path)
+ModelGLTF::ModelGLTF(const std::string& path)
 {
     _path = path;
 	_directory = _path.substr(0, _path.find_last_of('/') + 1);
@@ -76,7 +76,7 @@ void ModelGLTF::_loadModelGLTF()
     _processNode(0);
 }
 
-std::string ModelGLTF::_readInFile(std::string path)
+std::string ModelGLTF::_readInFile(const std::string& path)
 {
     std::string fileContent;
     std::ifstream file(path, std::ios::binary);
@@ -90,7 +90,7 @@ std::string ModelGLTF::_readInFile(std::string path)
     }
     catch(const std::exception& e)
     {
-        std::cout << "ERROR::MODEL::FILE_NOT_SUCCESFULLY_READ " << e.what() <<std::endl;
+        std::cout << "ERROR::MODEL::FILE_NOT_SUCCESSFULLY_READ " << e.what() <<std::endl;
     }
 
     return fileContent;
@@ -164,8 +164,8 @@ void ModelGLTF::_processNode(unsigned int child, glm::mat4 matrix)
     // Get child
     if (node.find("children") != node.end())
     {
-        for (unsigned int i = 0; i < node["children"].size(); i++)
-            _processNode(node["children"][i], transformation);
+        for (auto & nodeChild : node["children"])
+            _processNode(nodeChild, transformation);
     }
 }
 
@@ -313,12 +313,12 @@ std::vector<Texture> ModelGLTF::_getTextures()
         std::string textureURI = _JSON["images"][i]["uri"];
         std::string filePath = _directory + textureURI;
         bool skip = false;
-        for (int j = 0; j < _loadedTextures.size(); j++)
+        for (auto & _loadedTexture : _loadedTextures)
         {   
             // Check if texture has been loaded yet
-            if (std::strcmp(_loadedTextures[j].getPath(), filePath.c_str()) == 0 )
+            if (std::strcmp(_loadedTexture.getPath(), filePath.c_str()) == 0 )
             {
-                textures.push_back(_loadedTextures[j]);
+                textures.push_back(_loadedTexture);
                 skip = true;
                 break;
             }
@@ -343,3 +343,5 @@ std::vector<Texture> ModelGLTF::_getTextures()
 
     return textures;
 }
+
+#endif

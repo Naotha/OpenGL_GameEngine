@@ -1,4 +1,5 @@
-#pragma once
+#ifndef FBO_HPP
+#define FBO_HPP
 
 #include <glad/glad.h>
 #include <vector>
@@ -10,7 +11,7 @@ public:
     unsigned int texture;
     unsigned int depthRenderBuffer;
 
-    FBO(float width, float height)
+    FBO(int width, int height)
     {
         glGenFramebuffers(1, &ID);
         glBindFramebuffer(GL_FRAMEBUFFER, ID);
@@ -32,7 +33,7 @@ public:
         glBindRenderbuffer(GL_RENDERBUFFER, 0);
     }
 
-    void resize(float width, float height)
+    void resize(int width, int height)
     {
         glBindFramebuffer(GL_FRAMEBUFFER, ID);
 
@@ -52,3 +53,5 @@ public:
     void unbind() { glBindFramebuffer(GL_FRAMEBUFFER, 0); }
     void deleteFBO() { glDeleteFramebuffers(1, &ID); }
 };
+
+#endif

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef CAMERA_HPP
+#define CAMERA_HPP
 
 #include <glad/glad.h>
 #include <glm/glm.hpp>
@@ -110,3 +111,5 @@ void Camera::processMouseScroll(float yOffset)
     if (fov > 45.0f)
         fov = 45.0f;
 }
+
+#endif

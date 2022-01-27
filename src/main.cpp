@@ -27,18 +27,18 @@
 #include "Engine/modelLoader.hpp"
 
 
-void frambuffer_size_callback(GLFWwindow* window, int width, int height);
+void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
-void mouse_callback(GLFWwindow* window, double xpos, double ypos);
-void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+void mouse_callback(GLFWwindow* window, double xPos, double yPos);
+void scroll_callback(GLFWwindow* window, double xOffset, double yOffset);
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 void calculateDeltaTime();
 
 /* Window, cursor */
-unsigned short windowWidth = 1000;
-unsigned short windowHeight = 600;
-float lastX = windowWidth / 2;
-float lastY = windowHeight / 2;
+int windowWidth = 1000;
+int windowHeight = 600;
+float lastX = (float)windowWidth / 2;
+float lastY = (float)windowHeight / 2;
 bool firstMouse = true;
 bool cameraMode = false;
 
@@ -64,65 +64,67 @@ float prevViewPanelX = (float)windowWidth;
 float prevViewPanelY = (float)windowHeight;
 ImGui::FileBrowser fileDialog;
 
-std::vector<Vertex> cubeVertices = {
-    /* Front Face */
-    // Positions                       // Normals                       // Texture Coords
-    {glm::vec3(-0.5f,  0.5f,  0.5f),   glm::vec3( 0.0f,  0.0f,  1.0f),   glm::vec2(0.0f, 1.0f)},  // Front Top Left
-    {glm::vec3(-0.5f, -0.5f,  0.5f),   glm::vec3( 0.0f,  0.0f,  1.0f),   glm::vec2(0.0f, 0.0f)},  // Front Bottom Left
-    {glm::vec3( 0.5f, -0.5f,  0.5f),   glm::vec3( 0.0f,  0.0f,  1.0f),   glm::vec2(1.0f, 0.0f)},  // Front Bottom Right
-    {glm::vec3( 0.5f,  0.5f,  0.5f),   glm::vec3( 0.0f,  0.0f,  1.0f),   glm::vec2(1.0f, 1.0f)},  // Front Top Right
-    /* Back Face */
-    // Positions                       // Normals                        // Texture Coords
-    {glm::vec3( 0.5f,  0.5f, -0.5f),   glm::vec3( 0.0f,  0.0f, -1.0f),   glm::vec2(1.0f, 1.0f)},  // Back Top Left
-    {glm::vec3( 0.5f, -0.5f, -0.5f),   glm::vec3( 0.0f,  0.0f, -1.0f),   glm::vec2(1.0f, 0.0f)},  // Back Bottom Left
-    {glm::vec3(-0.5f, -0.5f, -0.5f),   glm::vec3( 0.0f,  0.0f, -1.0f),   glm::vec2(0.0f, 0.0f)},  // Back Bottom Right
-    {glm::vec3(-0.5f,  0.5f, -0.5f),   glm::vec3( 0.0f,  0.0f, -1.0f),   glm::vec2(0.0f, 1.0f)},  // Back Top Right
-    /* Top Face */
-    // Positions                       // Normals                        // Texture Coords
-    {glm::vec3(-0.5f,  0.5f, -0.5f),   glm::vec3( 0.0f,  1.0f,  0.0f),   glm::vec2(0.0f, 1.0f)},  // Top Left
-    {glm::vec3(-0.5f,  0.5f,  0.5f),   glm::vec3( 0.0f,  1.0f,  0.0f),   glm::vec2(0.0f, 0.0f)},  // Bottom Left
-    {glm::vec3( 0.5f,  0.5f,  0.5f),   glm::vec3( 0.0f,  1.0f,  0.0f),   glm::vec2(1.0f, 0.0f)},  // Bottom Right
-    {glm::vec3( 0.5f,  0.5f, -0.5f),   glm::vec3( 0.0f,  1.0f,  0.0f),   glm::vec2(1.0f, 1.0f)},  // Top Right
-    /* Bottom Face */
-    // Positions                       // Normals                        // Texture Coords
-    {glm::vec3( 0.5f, -0.5f, -0.5f),   glm::vec3( 0.0f, -1.0f,  0.0f),   glm::vec2(0.0f, 1.0f)},  // Top Left
-    {glm::vec3( 0.5f, -0.5f,  0.5f),   glm::vec3( 0.0f, -1.0f,  0.0f),   glm::vec2(0.0f, 0.0f)},  // Bottom Left
-    {glm::vec3(-0.5f, -0.5f,  0.5f),   glm::vec3( 0.0f, -1.0f,  0.0f),   glm::vec2(1.0f, 0.0f)},  // Bottom Right
-    {glm::vec3(-0.5f, -0.5f, -0.5f),   glm::vec3( 0.0f, -1.0f,  0.0f),   glm::vec2(1.0f, 1.0f)},  // Top Right
-    /* Left Face */
-    // Positions                       // Normals                        // Texture Coords
-    {glm::vec3(-0.5f,  0.5f, -0.5f),   glm::vec3(-1.0f,  0.0f,  0.0f),   glm::vec2(0.0f, 1.0f)},  // Top Left
-    {glm::vec3(-0.5f, -0.5f, -0.5f),   glm::vec3(-1.0f,  0.0f,  0.0f),   glm::vec2(0.0f, 0.0f)},  // Bottom Left
-    {glm::vec3(-0.5f, -0.5f,  0.5f),   glm::vec3(-1.0f,  0.0f,  0.0f),   glm::vec2(1.0f, 0.0f)},  // Bottom Right
-    {glm::vec3(-0.5f,  0.5f,  0.5f),   glm::vec3(-1.0f,  0.0f,  0.0f),   glm::vec2(1.0f, 1.0f)},  // Top Right
-    /* Right Face */
-    // Positions                       // Normals                        // Texture Coords
-    {glm::vec3( 0.5f,  0.5f,  0.5f),   glm::vec3( 1.0f,  0.0f,  0.0f),   glm::vec2(0.0f, 1.0f)},  // Top Left
-    {glm::vec3( 0.5f, -0.5f,  0.5f),   glm::vec3( 1.0f,  0.0f,  0.0f),   glm::vec2(0.0f, 0.0f)},  // Bottom Left
-    {glm::vec3( 0.5f, -0.5f, -0.5f),   glm::vec3( 1.0f,  0.0f,  0.0f),   glm::vec2(1.0f, 0.0f)},  // Bottom Right
-    {glm::vec3( 0.5f,  0.5f, -0.5f),   glm::vec3( 1.0f,  0.0f,  0.0f),   glm::vec2(1.0f, 1.0f)},  // Top Right
-};
+// Cube Vertices
+// std::vector<Vertex> cubeVertices = {
+//    /* Front Face */
+//    // Positions                       // Normals                       // Texture Coords
+//    {glm::vec3(-0.5f,  0.5f,  0.5f),   glm::vec3( 0.0f,  0.0f,  1.0f),   glm::vec2(0.0f, 1.0f)},  // Front Top Left
+//    {glm::vec3(-0.5f, -0.5f,  0.5f),   glm::vec3( 0.0f,  0.0f,  1.0f),   glm::vec2(0.0f, 0.0f)},  // Front Bottom Left
+//    {glm::vec3( 0.5f, -0.5f,  0.5f),   glm::vec3( 0.0f,  0.0f,  1.0f),   glm::vec2(1.0f, 0.0f)},  // Front Bottom Right
+//    {glm::vec3( 0.5f,  0.5f,  0.5f),   glm::vec3( 0.0f,  0.0f,  1.0f),   glm::vec2(1.0f, 1.0f)},  // Front Top Right
+//    /* Back Face */
+//    // Positions                       // Normals                        // Texture Coords
+//    {glm::vec3( 0.5f,  0.5f, -0.5f),   glm::vec3( 0.0f,  0.0f, -1.0f),   glm::vec2(1.0f, 1.0f)},  // Back Top Left
+//    {glm::vec3( 0.5f, -0.5f, -0.5f),   glm::vec3( 0.0f,  0.0f, -1.0f),   glm::vec2(1.0f, 0.0f)},  // Back Bottom Left
+//    {glm::vec3(-0.5f, -0.5f, -0.5f),   glm::vec3( 0.0f,  0.0f, -1.0f),   glm::vec2(0.0f, 0.0f)},  // Back Bottom Right
+//    {glm::vec3(-0.5f,  0.5f, -0.5f),   glm::vec3( 0.0f,  0.0f, -1.0f),   glm::vec2(0.0f, 1.0f)},  // Back Top Right
+//    /* Top Face */
+//    // Positions                       // Normals                        // Texture Coords
+//    {glm::vec3(-0.5f,  0.5f, -0.5f),   glm::vec3( 0.0f,  1.0f,  0.0f),   glm::vec2(0.0f, 1.0f)},  // Top Left
+//    {glm::vec3(-0.5f,  0.5f,  0.5f),   glm::vec3( 0.0f,  1.0f,  0.0f),   glm::vec2(0.0f, 0.0f)},  // Bottom Left
+//    {glm::vec3( 0.5f,  0.5f,  0.5f),   glm::vec3( 0.0f,  1.0f,  0.0f),   glm::vec2(1.0f, 0.0f)},  // Bottom Right
+//    {glm::vec3( 0.5f,  0.5f, -0.5f),   glm::vec3( 0.0f,  1.0f,  0.0f),   glm::vec2(1.0f, 1.0f)},  // Top Right
+//    /* Bottom Face */
+//    // Positions                       // Normals                        // Texture Coords
+//    {glm::vec3( 0.5f, -0.5f, -0.5f),   glm::vec3( 0.0f, -1.0f,  0.0f),   glm::vec2(0.0f, 1.0f)},  // Top Left
+//    {glm::vec3( 0.5f, -0.5f,  0.5f),   glm::vec3( 0.0f, -1.0f,  0.0f),   glm::vec2(0.0f, 0.0f)},  // Bottom Left
+//    {glm::vec3(-0.5f, -0.5f,  0.5f),   glm::vec3( 0.0f, -1.0f,  0.0f),   glm::vec2(1.0f, 0.0f)},  // Bottom Right
+//    {glm::vec3(-0.5f, -0.5f, -0.5f),   glm::vec3( 0.0f, -1.0f,  0.0f),   glm::vec2(1.0f, 1.0f)},  // Top Right
+//    /* Left Face */
+//    // Positions                       // Normals                        // Texture Coords
+//    {glm::vec3(-0.5f,  0.5f, -0.5f),   glm::vec3(-1.0f,  0.0f,  0.0f),   glm::vec2(0.0f, 1.0f)},  // Top Left
+//    {glm::vec3(-0.5f, -0.5f, -0.5f),   glm::vec3(-1.0f,  0.0f,  0.0f),   glm::vec2(0.0f, 0.0f)},  // Bottom Left
+//    {glm::vec3(-0.5f, -0.5f,  0.5f),   glm::vec3(-1.0f,  0.0f,  0.0f),   glm::vec2(1.0f, 0.0f)},  // Bottom Right
+//    {glm::vec3(-0.5f,  0.5f,  0.5f),   glm::vec3(-1.0f,  0.0f,  0.0f),   glm::vec2(1.0f, 1.0f)},  // Top Right
+//    /* Right Face */
+//    // Positions                       // Normals                        // Texture Coords
+//    {glm::vec3( 0.5f,  0.5f,  0.5f),   glm::vec3( 1.0f,  0.0f,  0.0f),   glm::vec2(0.0f, 1.0f)},  // Top Left
+//    {glm::vec3( 0.5f, -0.5f,  0.5f),   glm::vec3( 1.0f,  0.0f,  0.0f),   glm::vec2(0.0f, 0.0f)},  // Bottom Left
+//    {glm::vec3( 0.5f, -0.5f, -0.5f),   glm::vec3( 1.0f,  0.0f,  0.0f),   glm::vec2(1.0f, 0.0f)},  // Bottom Right
+//    {glm::vec3( 0.5f,  0.5f, -0.5f),   glm::vec3( 1.0f,  0.0f,  0.0f),   glm::vec2(1.0f, 1.0f)},  // Top Right
+//};
 
-std::vector<unsigned int> cubeIndices = {
-    // Front Face
-     0,  1,  2,
-     2,  3,  0,
-    // Back Face
-     4,  5,  6,
-     6,  7,  4,
-    // Top Face
-     8,  9, 10,
-    10, 11,  8,
-    // Bottom Face
-    12, 13, 14,
-    14, 15, 12,
-    // Left Face
-    16, 17, 18,
-    18, 19, 16,
-    // Right Face
-    20, 21, 22,
-    22, 23, 20,
-};
+// Cube Indices
+// std::vector<unsigned int> cubeIndices = {
+//    // Front Face
+//     0,  1,  2,
+//     2,  3,  0,
+//    // Back Face
+//     4,  5,  6,
+//     6,  7,  4,
+//    // Top Face
+//     8,  9, 10,
+//    10, 11,  8,
+//    // Bottom Face
+//    12, 13, 14,
+//    14, 15, 12,
+//    // Left Face
+//    16, 17, 18,
+//    18, 19, 16,
+//    // Right Face
+//    20, 21, 22,
+//    22, 23, 20,
+//};
 
 bool CreateGLFWContext()
 {
@@ -135,7 +137,7 @@ bool CreateGLFWContext()
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     /* Create a windowed mode window and its OpenGL context */
-    window = glfwCreateWindow(windowWidth, windowHeight, "OpenGL Engine", NULL, NULL);
+    window = glfwCreateWindow(windowWidth, windowHeight, "OpenGL Engine", nullptr, nullptr);
     if (!window)
     {
         std::cout << "Failed to create GLFW window" << std::endl;
@@ -165,7 +167,7 @@ bool SetupOpenGL()
 
     /* Set Viewport */
     glViewport(0, 0, windowWidth, windowHeight);
-    glfwSetFramebufferSizeCallback(window, frambuffer_size_callback); // Change viewport when window is resized
+    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback); // Change viewport when window is resized
     
     /* Set Mouse callbacks */
     glfwSetCursorPosCallback(window, mouse_callback);
@@ -219,7 +221,7 @@ void CreateIMGUIContext()
     fileDialog.SetTypeFilters({ ".gltf", ".obj" });
 }
 
-int main(void)
+int main()
 {
     /// SETUP GLFW
     if(!CreateGLFWContext())
@@ -261,10 +263,9 @@ int main(void)
     glm::mat4 model = glm::mat4(1.0f);
 
     /* Init FrameRate Calculation */
-    double currentFrame = 0;
-    double lastFrame = currentFrame;
-    double deltaTime;
-    double frameTime = 0;
+    float currentFrame = 0;
+    float lastFrame = currentFrame;
+    float frameTime = 0;
     int fps = 0;
 
     // Framebuffer
@@ -287,7 +288,7 @@ int main(void)
         }
         
         /* ImGUI PRE RENDER */
-        // feed inputs to dear imgui, start new frame
+        // Feed inputs to dear ImGui, start new frame
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
@@ -323,7 +324,7 @@ int main(void)
         /// RENDER
         glViewport(0, 0, viewportPanelSize.x, viewportPanelSize.y);
         fbo.bind();
-        glClearColor(0.1f,0.1f,0.1f, 1.0f);
+        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         /* Draw Objects */
         
@@ -418,7 +419,7 @@ int main(void)
         }
         fileDialog.Display();
 
-        std::string newModelPath = "";
+        std::string newModelPath;
         if (fileDialog.HasSelected())
         {
             newModelPath = fileDialog.GetSelected().string();
@@ -429,7 +430,7 @@ int main(void)
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
-        if (newModelPath != "")
+        if (!newModelPath.empty())
         {
             std::cout<<newModelPath<<std::endl;
             delete(testModel);
@@ -451,7 +452,7 @@ int main(void)
     return 0;
 }
 
-void frambuffer_size_callback(GLFWwindow* window, int width, int height)
+void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
     windowWidth = width;
     windowHeight = height;
@@ -473,7 +474,7 @@ void processInput(GLFWwindow* window)
     
     if (glfwGetKey(window, GLFW_KEY_LEFT_ALT) == GLFW_PRESS)
     {   
-        if (cameraMode == false)
+        if (!cameraMode)
         {
             cameraMode = true;
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -490,23 +491,23 @@ void processInput(GLFWwindow* window)
     }
 }
 
-void mouse_callback(GLFWwindow* window, double xpos, double ypos)
+void mouse_callback(GLFWwindow* window, double xPos, double yPos)
 {   
     if (cameraMode)
     {
         // Circumvent sudden jump on focus gain
         if (firstMouse)
         {
-            lastX = xpos;
-            lastY = ypos;
+            lastX = xPos;
+            lastY = yPos;
             firstMouse = false;
         }
 
         // Calculate mouse offset
-        float xOffset = xpos - lastX;
-        float yOffset = lastY - ypos;
-        lastX = xpos;
-        lastY = ypos;
+        float xOffset = xPos - lastX;
+        float yOffset = lastY - yPos;
+        lastX = xPos;
+        lastY = yPos;
 
         camera.processMouseMovement(xOffset, yOffset);
     }
@@ -520,9 +521,9 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
     }
 }
 
-void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+void scroll_callback(GLFWwindow* window, double xOffset, double yOffset)
 {
-    camera.processMouseScroll(yoffset);
+    camera.processMouseScroll(yOffset);
 }
 
 void calculateDeltaTime()

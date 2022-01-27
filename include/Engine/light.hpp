@@ -1,4 +1,5 @@
-#pragma once
+#ifndef LIGHT_HPP
+#define LIGHT_HPP
 
 #include <glm/glm.hpp>
 #include "Engine/shader.hpp"
@@ -33,7 +34,7 @@ public:
 
     void setDirection(glm::vec3 direction) { _direction = direction; }
 
-    void setLightInShader(std::string uniformLightName, Shader& shader) final override
+    void setLightInShader(std::string uniformLightName, Shader& shader) final
     {
         shader.bind();
         shader.setUniformFloat3((uniformLightName + ".direction").c_str(), _direction);
@@ -78,7 +79,7 @@ public:
     void setLinAttenuation(float linAttenuation) { _attenuation.linear = linAttenuation; }
     void setQuadAttenuation(float quadAttenuation) { _attenuation.quadratic = quadAttenuation; }
 
-    void setLightInShader(std::string uniformLightName, Shader& shader) final override
+    void setLightInShader(std::string uniformLightName, Shader& shader) final
     {
         shader.bind();
         shader.setUniformFloat3((uniformLightName + ".position").c_str(), _position);
@@ -127,7 +128,7 @@ public:
     void setLinAttenuation(float linAttenuation) { _attenuation.linear = linAttenuation; }
     void setQuadAttenuation(float quadAttenuation) { _attenuation.quadratic = quadAttenuation; }
 
-    void setLightInShader(std::string uniformLightName, Shader& shader) final override
+    void setLightInShader(std::string uniformLightName, Shader& shader) final
     {
         shader.bind();
         shader.setUniformFloat3((uniformLightName + ".position").c_str(), _position);
@@ -154,3 +155,5 @@ private:
 
     Attenuation _attenuation;
 };
+
+#endif

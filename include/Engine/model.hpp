@@ -1,4 +1,5 @@
-#pragma once
+#ifndef MODEL_HPP
+#define MODEL_HPP
 
 #include <vector>
 
@@ -15,6 +16,8 @@ protected:
 
 void Model::draw(Shader& shader)
 {
-    for (int i = 0; i < _meshes.size(); i++)
-        _meshes[i].draw(shader);
+    for (auto & _mesh : _meshes)
+        _mesh.draw(shader);
 }
+
+#endif

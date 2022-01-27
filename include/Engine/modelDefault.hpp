@@ -1,4 +1,5 @@
-#pragma once
+#ifndef MODEL_DEFAULT_HPP
+#define MODEL_DEFAULT_HPP
 
 #include <string>
 #include <vector>
@@ -17,24 +18,24 @@
 class ModelDefault : public Model
 {
 public:
-    ModelDefault(const std::string path);
+    ModelDefault(const std::string& path);
 
 private:
     std::vector<Texture> _loadedTextures;
     std::string _directory;
 
-    void _loadModelDefault(std::string path);
+    void _loadModelDefault(const std::string& path);
     void _processNode(aiNode* node, const aiScene* scene);
     Mesh _processMesh(aiMesh* mesh, const aiScene* scene);
     std::vector<Texture> _loadMaterialTextures(aiMaterial* material, aiTextureType type, TextureType typeName);
 };
 
-ModelDefault::ModelDefault(const std::string path)
+ModelDefault::ModelDefault(const std::string& path)
 {
     _loadModelDefault(path);
 }
 
-void ModelDefault::_loadModelDefault(std::string path)
+void ModelDefault::_loadModelDefault(const std::string& path)
 {
     
     Assimp::Importer importer;
@@ -73,7 +74,7 @@ Mesh ModelDefault::_processMesh(aiMesh* mesh, const aiScene* scene)
     // Vertices
     for (int i = 0; i < mesh->mNumVertices; i++)
     {
-        Vertex vertex;
+        Vertex vertex{};
         glm::vec3 vector;
         // Position
         vector.x = mesh->mVertices[i].x;
@@ -136,12 +137,12 @@ std::vector<Texture> ModelDefault::_loadMaterialTextures(aiMaterial* material, a
         std::string fileName = std::string(str.C_Str());
         std::string filePath = _directory + "/" + fileName;
         bool skip = false;
-        for (int j = 0; j < _loadedTextures.size(); j++)
+        for (auto & _loadedTexture : _loadedTextures)
         {   
             // Check if texture has been loaded yet
-            if (std::strcmp(_loadedTextures[j].getPath(), filePath.c_str()) == 0 )
+            if (std::strcmp(_loadedTexture.getPath(), filePath.c_str()) == 0 )
             {
-                textures.push_back(_loadedTextures[j]);
+                textures.push_back(_loadedTexture);
                 skip = true;
                 break;
             }
@@ -156,3 +157,5 @@ std::vector<Texture> ModelDefault::_loadMaterialTextures(aiMaterial* material, a
     }
     return textures;
 }
+
+#endif

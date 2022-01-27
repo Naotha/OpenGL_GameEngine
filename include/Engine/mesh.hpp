@@ -1,4 +1,5 @@
-#pragma once
+#ifndef MESH_HPP
+#define MESH_HPP
 
 #include <glad/glad.h>
 #include <vector>
@@ -97,3 +98,5 @@ void Mesh::draw(Shader& shader)
     glActiveTexture(GL_TEXTURE0);
     shader.unbind();
 }
+
+#endif

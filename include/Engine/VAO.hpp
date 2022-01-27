@@ -1,4 +1,5 @@
-#pragma once
+#ifndef VAO_HPP
+#define VAO_HPP
 
 #include <glad/glad.h>
 
@@ -27,3 +28,5 @@ public:
     void deleteVAO() { glDeleteVertexArrays(1, &ID); }
 
 };
+
+#endif

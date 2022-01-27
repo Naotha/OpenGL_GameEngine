@@ -1,4 +1,5 @@
-#pragma once
+#ifndef VBO_HPP
+#define VBO_HPP
 
 #include <glad/glad.h>
 #include <vector>
@@ -26,3 +27,5 @@ public:
     void unbind() { glBindBuffer(GL_ARRAY_BUFFER, 0); }
     void deleteVBO() { glDeleteBuffers(1, &ID); }
 };
+
+#endif
