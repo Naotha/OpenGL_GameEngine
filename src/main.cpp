@@ -235,10 +235,10 @@ int main()
         return -1;
     
     /* Initialize Shaders */
-    Shader shader("./shaders/standardShader.vert", "./shaders/standardShader.frag");
+    Shader shader("./resources/shaders/standardShader.vert", "./resources/shaders/standardShader.frag");
 
-    //Model* testModel = ModelLoader::LoadModel("./models/backpack/backpack.obj");
-    Model* testModel = ModelLoader::LoadModel("./models/shiba/scene.gltf");
+    //Model* testModel = ModelLoader::LoadModel("./resources/models/backpack/backpack.obj");
+    Model* testModel = ModelLoader::LoadModel("./resources/models/shiba/scene.gltf");
 
     /* Light */
     shader.bind();
