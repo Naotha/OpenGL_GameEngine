@@ -8,7 +8,7 @@
 #include <algorithm>
 #include "glm/glm.hpp"
 
-#include "json/json.hpp"
+#include "nlohmann/json.hpp"
 
 #include "Engine/shader.hpp"
 #include "Engine/mesh.hpp"

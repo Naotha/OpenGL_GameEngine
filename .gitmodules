@@ -1,3 +1,21 @@
 [submodule "vendor/GLFW"]
 	path = vendor/GLFW
 	url = https://github.com/glfw/glfw.git
+[submodule "vendor/assimp"]
+	path = vendor/assimp
+	url = https://github.com/assimp/assimp.git
+[submodule "vendor/json"]
+	path = vendor/json
+	url = https://github.com/nlohmann/json.git
+[submodule "vendor/glm"]
+	path = vendor/glm
+	url = https://github.com/g-truc/glm.git
+[submodule "vendor/imgui"]
+	path = vendor/imgui
+	url = https://github.com/ocornut/imgui.git
+[submodule "vendor/imguizmo"]
+	path = vendor/imguizmo
+	url = https://github.com/CedricGuillemet/ImGuizmo.git
+[submodule "vendor/imgui_filebrowser"]
+	path = vendor/imgui_filebrowser
+	url = https://github.com/AirGuanZ/imgui-filebrowser.git
