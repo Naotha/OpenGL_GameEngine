@@ -6,11 +6,11 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/matrix_decompose.hpp>
 
-#include <ImGui/imgui.h>
-#include <ImGui/ImGuizmo.h>
-#include <ImGui/backends/imgui_impl_glfw.h>
-#include <ImGui/filebrowser/imfilebrowser.h>
-#include <ImGui/backends/imgui_impl_opengl3.h>
+#include <imgui/imgui.h>
+#include <imguizmo/ImGuizmo.h>
+#include <imgui/backends/imgui_impl_glfw.h>
+#include <imgui/backends/imgui_impl_opengl3.h>
+#include <imgui_filebrowser/imfilebrowser.h>
 
 #include <iostream>
 #include <vector>
@@ -35,8 +35,8 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 void calculateDeltaTime();
 
 /* Window, cursor */
-int windowWidth = 1000;
-int windowHeight = 600;
+int windowWidth = 1280;
+int windowHeight = 720;
 float lastX = (float)windowWidth / 2;
 float lastY = (float)windowHeight / 2;
 bool firstMouse = true;
@@ -58,75 +58,7 @@ Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
 /* Light */
 bool spotLightOn = false;
 
-/* Context */
-GLFWwindow* window;
-float prevViewPanelX = (float)windowWidth;
-float prevViewPanelY = (float)windowHeight;
-ImGui::FileBrowser fileDialog;
-
-// Cube Vertices
-// std::vector<Vertex> cubeVertices = {
-//    /* Front Face */
-//    // Positions                       // Normals                       // Texture Coords
-//    {glm::vec3(-0.5f,  0.5f,  0.5f),   glm::vec3( 0.0f,  0.0f,  1.0f),   glm::vec2(0.0f, 1.0f)},  // Front Top Left
-//    {glm::vec3(-0.5f, -0.5f,  0.5f),   glm::vec3( 0.0f,  0.0f,  1.0f),   glm::vec2(0.0f, 0.0f)},  // Front Bottom Left
-//    {glm::vec3( 0.5f, -0.5f,  0.5f),   glm::vec3( 0.0f,  0.0f,  1.0f),   glm::vec2(1.0f, 0.0f)},  // Front Bottom Right
-//    {glm::vec3( 0.5f,  0.5f,  0.5f),   glm::vec3( 0.0f,  0.0f,  1.0f),   glm::vec2(1.0f, 1.0f)},  // Front Top Right
-//    /* Back Face */
-//    // Positions                       // Normals                        // Texture Coords
-//    {glm::vec3( 0.5f,  0.5f, -0.5f),   glm::vec3( 0.0f,  0.0f, -1.0f),   glm::vec2(1.0f, 1.0f)},  // Back Top Left
-//    {glm::vec3( 0.5f, -0.5f, -0.5f),   glm::vec3( 0.0f,  0.0f, -1.0f),   glm::vec2(1.0f, 0.0f)},  // Back Bottom Left
-//    {glm::vec3(-0.5f, -0.5f, -0.5f),   glm::vec3( 0.0f,  0.0f, -1.0f),   glm::vec2(0.0f, 0.0f)},  // Back Bottom Right
-//    {glm::vec3(-0.5f,  0.5f, -0.5f),   glm::vec3( 0.0f,  0.0f, -1.0f),   glm::vec2(0.0f, 1.0f)},  // Back Top Right
-//    /* Top Face */
-//    // Positions                       // Normals                        // Texture Coords
-//    {glm::vec3(-0.5f,  0.5f, -0.5f),   glm::vec3( 0.0f,  1.0f,  0.0f),   glm::vec2(0.0f, 1.0f)},  // Top Left
-//    {glm::vec3(-0.5f,  0.5f,  0.5f),   glm::vec3( 0.0f,  1.0f,  0.0f),   glm::vec2(0.0f, 0.0f)},  // Bottom Left
-//    {glm::vec3( 0.5f,  0.5f,  0.5f),   glm::vec3( 0.0f,  1.0f,  0.0f),   glm::vec2(1.0f, 0.0f)},  // Bottom Right
-//    {glm::vec3( 0.5f,  0.5f, -0.5f),   glm::vec3( 0.0f,  1.0f,  0.0f),   glm::vec2(1.0f, 1.0f)},  // Top Right
-//    /* Bottom Face */
-//    // Positions                       // Normals                        // Texture Coords
-//    {glm::vec3( 0.5f, -0.5f, -0.5f),   glm::vec3( 0.0f, -1.0f,  0.0f),   glm::vec2(0.0f, 1.0f)},  // Top Left
-//    {glm::vec3( 0.5f, -0.5f,  0.5f),   glm::vec3( 0.0f, -1.0f,  0.0f),   glm::vec2(0.0f, 0.0f)},  // Bottom Left
-//    {glm::vec3(-0.5f, -0.5f,  0.5f),   glm::vec3( 0.0f, -1.0f,  0.0f),   glm::vec2(1.0f, 0.0f)},  // Bottom Right
-//    {glm::vec3(-0.5f, -0.5f, -0.5f),   glm::vec3( 0.0f, -1.0f,  0.0f),   glm::vec2(1.0f, 1.0f)},  // Top Right
-//    /* Left Face */
-//    // Positions                       // Normals                        // Texture Coords
-//    {glm::vec3(-0.5f,  0.5f, -0.5f),   glm::vec3(-1.0f,  0.0f,  0.0f),   glm::vec2(0.0f, 1.0f)},  // Top Left
-//    {glm::vec3(-0.5f, -0.5f, -0.5f),   glm::vec3(-1.0f,  0.0f,  0.0f),   glm::vec2(0.0f, 0.0f)},  // Bottom Left
-//    {glm::vec3(-0.5f, -0.5f,  0.5f),   glm::vec3(-1.0f,  0.0f,  0.0f),   glm::vec2(1.0f, 0.0f)},  // Bottom Right
-//    {glm::vec3(-0.5f,  0.5f,  0.5f),   glm::vec3(-1.0f,  0.0f,  0.0f),   glm::vec2(1.0f, 1.0f)},  // Top Right
-//    /* Right Face */
-//    // Positions                       // Normals                        // Texture Coords
-//    {glm::vec3( 0.5f,  0.5f,  0.5f),   glm::vec3( 1.0f,  0.0f,  0.0f),   glm::vec2(0.0f, 1.0f)},  // Top Left
-//    {glm::vec3( 0.5f, -0.5f,  0.5f),   glm::vec3( 1.0f,  0.0f,  0.0f),   glm::vec2(0.0f, 0.0f)},  // Bottom Left
-//    {glm::vec3( 0.5f, -0.5f, -0.5f),   glm::vec3( 1.0f,  0.0f,  0.0f),   glm::vec2(1.0f, 0.0f)},  // Bottom Right
-//    {glm::vec3( 0.5f,  0.5f, -0.5f),   glm::vec3( 1.0f,  0.0f,  0.0f),   glm::vec2(1.0f, 1.0f)},  // Top Right
-//};
-
-// Cube Indices
-// std::vector<unsigned int> cubeIndices = {
-//    // Front Face
-//     0,  1,  2,
-//     2,  3,  0,
-//    // Back Face
-//     4,  5,  6,
-//     6,  7,  4,
-//    // Top Face
-//     8,  9, 10,
-//    10, 11,  8,
-//    // Bottom Face
-//    12, 13, 14,
-//    14, 15, 12,
-//    // Left Face
-//    16, 17, 18,
-//    18, 19, 16,
-//    // Right Face
-//    20, 21, 22,
-//    22, 23, 20,
-//};
-
-bool CreateGLFWContext()
+int main()
 {
     /// SETUP GLFW
     /* Initialize the library */
@@ -137,7 +69,7 @@ bool CreateGLFWContext()
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     /* Create a windowed mode window and its OpenGL context */
-    window = glfwCreateWindow(windowWidth, windowHeight, "OpenGL Engine", nullptr, nullptr);
+    GLFWwindow* window = glfwCreateWindow(windowWidth, windowHeight, "OpenGL Engine", nullptr, nullptr);
     if (!window)
     {
         std::cout << "Failed to create GLFW window" << std::endl;
@@ -148,43 +80,22 @@ bool CreateGLFWContext()
     /* Make the window's context current */
     glfwMakeContextCurrent(window);
 
-    return true;
-}
-
-bool SetupOpenGL()
-{
-    /* Initialize GLAD */
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-    {
-        std::cout << "Failed to initialize GLAD" << std::endl;
-        return false;
-    }
-
-    /* GL Enable */
-    glEnable(GL_CULL_FACE);
-    glEnable(GL_BLEND);
-    glEnable(GL_DEPTH_TEST);
-
-    /* Set Viewport */
-    glViewport(0, 0, windowWidth, windowHeight);
+    /* Set callbacks */
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback); // Change viewport when window is resized
-    
-    /* Set Mouse callbacks */
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetScrollCallback(window, scroll_callback);
     glfwSetKeyCallback(window, key_callback);
 
-    return true;
-}
-
-void CreateIMGUIContext()
-{
+    /// SETUP IMGUI
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
-    ImGuiIO &io = ImGui::GetIO();
-    io.ConfigWindowsMoveFromTitleBarOnly=true;
-    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    ImGui::FileBrowser fileDialog;
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
+    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;         // Enable Multi-Viewport / Platform Windows
+
+    // Setup Dear ImGui style
     auto& colors = ImGui::GetStyle().Colors;
     colors[ImGuiCol_WindowBg] = ImVec4{ 0.1f, 0.1f, 0.1f, 1.0f };
     colors[ImGuiCol_Header] = ImVec4{ 0.2f, 0.2f, 0.2f, 1.0f };
@@ -205,34 +116,36 @@ void CreateIMGUIContext()
     colors[ImGuiCol_TitleBgActive] = ImVec4{ 0.15f, 0.15f, 0.15f, 1.0f };
     colors[ImGuiCol_TitleBgCollapsed] = ImVec4{ 0.15f, 0.15f, 0.15f, 1.0f };
 
+    // When viewports are enabled we tweak WindowRounding/WindowBg so platform windows can look identical to regular ones.
     ImGuiStyle& style = ImGui::GetStyle();
     if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
     {
-      style.WindowRounding = 0.0f;
-      style.Colors[ImGuiCol_WindowBg].w = 1.0f;
+        style.WindowRounding = 0.0f;
+        style.Colors[ImGuiCol_WindowBg].w = 1.0f;
     }
-    // Setup Platform/Renderer bindings
+
+    // Setup Platform/Renderer backends
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init();
-    prevViewPanelX = windowWidth;
-    prevViewPanelY = windowHeight;
 
     fileDialog.SetTitle("Load Model...");
     fileDialog.SetTypeFilters({ ".gltf", ".obj" });
-}
-
-int main()
-{
-    /// SETUP GLFW
-    if(!CreateGLFWContext())
-        return -1;
-
-    /// SETUP IMGUI
-    CreateIMGUIContext();
     
     /// SETUP OPENGL
-    if(!SetupOpenGL())
-        return -1;
+    /* Initialize GLAD */
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+    {
+        std::cout << "Failed to initialize GLAD" << std::endl;
+        return false;
+    }
+
+    /* GL Enable */
+    glEnable(GL_CULL_FACE);
+    glEnable(GL_BLEND);
+    glEnable(GL_DEPTH_TEST);
+
+    /* Set Viewport */
+    glViewport(0, 0, windowWidth, windowHeight);
     
     /* Initialize Shaders */
     Shader shader("./resources/shaders/standardShader.vert", "./resources/shaders/standardShader.frag");
@@ -270,10 +183,16 @@ int main()
 
     // Framebuffer
     FBO fbo(windowWidth, windowHeight);
+    float prevViewPanelX = (float)windowWidth;
+    float prevViewPanelY = (float)windowHeight;
 
     /* Loop until the user closes the window - Render Loop */
     while (!glfwWindowShouldClose(window))
     {
+        /* Poll for and process events */
+        processInput(window);
+        glfwPollEvents();
+
         // FPS counter
         currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
@@ -286,7 +205,7 @@ int main()
             fps = 0;
             frameTime = 0;
         }
-        
+
         /* ImGUI PRE RENDER */
         // Feed inputs to dear ImGui, start new frame
         ImGui_ImplOpenGL3_NewFrame();
@@ -327,7 +246,7 @@ int main()
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         /* Draw Objects */
-        
+
         /* Models */
         testModel->draw(shader);
 
@@ -367,10 +286,10 @@ int main()
         ImGuizmo::SetOrthographic(false);
         ImGuizmo::SetDrawlist();
         ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, ImGui::GetWindowWidth(), ImGui::GetWindowHeight());
-        
+
         ImGui::GetWindowDrawList()->AddImage((void *)(fbo.texture),
-                     ImVec2(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y), 
-                     ImVec2(ImGui::GetWindowPos().x + ImGui::GetWindowWidth(),ImGui::GetWindowPos().y + ImGui::GetWindowHeight()), 
+                     ImVec2(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y),
+                     ImVec2(ImGui::GetWindowPos().x + ImGui::GetWindowWidth(),ImGui::GetWindowPos().y + ImGui::GetWindowHeight()),
                      ImVec2(0, 1), ImVec2(1, 0));
         if (translate)
         {
@@ -425,11 +344,6 @@ int main()
             newModelPath = fileDialog.GetSelected().string();
             fileDialog.ClearSelected();
         }
-        ImGui::End();
-
-        ImGui::Render();
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
         if (!newModelPath.empty())
         {
             std::cout<<newModelPath<<std::endl;
@@ -437,17 +351,31 @@ int main()
             std::replace( newModelPath.begin(), newModelPath.end(), '\\', '/');
             testModel = ModelLoader::LoadModel(newModelPath);
         }
+        ImGui::End();
+
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+        {
+            GLFWwindow* backup_current_context = glfwGetCurrentContext();
+            ImGui::UpdatePlatformWindows();
+            ImGui::RenderPlatformWindowsDefault();
+            glfwMakeContextCurrent(backup_current_context);
+        }
 
         /// POST RENDER
-        /* Poll for and process events */
-        processInput(window);
-        glfwPollEvents();
         /* Swap front and back buffers */
         glfwSwapBuffers(window);
         /* Calculate time between frames */
         calculateDeltaTime();
     }
 
+    // Cleanup
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+
+    glfwDestroyWindow(window);
     glfwTerminate();
     return 0;
 }

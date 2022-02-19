@@ -2,15 +2,11 @@
 
 My own game engine project in C++, based on the OpenGL graphics API.
 
-## Used Libraries
-[GLFW](https://www.glfw.org/)
+# Build
 
-[ImGUI](https://github.com/ocornut/imgui)
+Run the following commands to build the project with Unix Makefile or use CMake for your liking:
+- configure.sh
+- build.sh
+- run.sh
 
-[ImGuizmo](https://github.com/CedricGuillemet/ImGuizmo)
-
-[Assimp](https://assimp.org/)
-
-[GLM](https://github.com/g-truc/glm)
-
-[GLAD](https://glad.dav1d.de/)
+Run clean.sh to delete the build folder.
