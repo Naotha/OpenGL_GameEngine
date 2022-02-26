@@ -3,6 +3,9 @@ project(OpenGL_GameEngine)
 
 file(GLOB SOURCES
         src/main.cpp
+        src/Core/OpenGLContext.cpp
+        src/Window/Window.cpp
+        src/Gui/EditorGui.cpp
         vendor/imgui/*.cpp
         vendor/imguizmo/*.cpp
         vendor/imgui/backends/imgui_impl_glfw.cpp
@@ -34,6 +37,7 @@ target_include_directories(${PROJECT_NAME}
         PUBLIC vendor/imgui
         PUBLIC vendor
         PUBLIC include
+        PUBLIC src
 )
 
 # Libraries

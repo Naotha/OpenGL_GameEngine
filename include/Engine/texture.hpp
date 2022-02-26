@@ -3,6 +3,8 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image/stb_image.h"
+#include <iostream>
+#include <glad/glad.h>
 
 // TODO TextureType??? Enum for diffuse, specular etc
 enum TextureType
@@ -50,10 +52,10 @@ Texture::Texture(const char* path, TextureType type)
             format = GL_RED;
         else if (imChannels == 3)
             format = GL_RGB;
-        else if (imChannels == 4)
+        else
             format = GL_RGBA;
 
-        glTexImage2D(GL_TEXTURE_2D, 0, format, imWidth, imHeight, 0, format, GL_UNSIGNED_BYTE, data);
+        glTexImage2D(GL_TEXTURE_2D, 0, (GLint)format, imWidth, imHeight, 0, format, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
     }
     else
