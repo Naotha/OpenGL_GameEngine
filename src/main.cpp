@@ -29,8 +29,9 @@
 
 #include "Window/Window.h"
 #include "Gui/EditorGui.h"
-#include "Gui/EditorWindow.h"
-#include "Gui/SceneWindow.hpp"
+#include "Gui/EditorWidget.h"
+#include "Gui/SceneWidget.hpp"
+#include "Gui/ParametersWidget.hpp"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
@@ -70,10 +71,6 @@ int main()
     glfwSetScrollCallback(window.GetGLFWWindow(), scroll_callback);
     glfwSetKeyCallback(window.GetGLFWWindow(), key_callback);
 
-    ImGui::FileBrowser fileDialog;
-    fileDialog.SetTitle("Load Model...");
-    fileDialog.SetTypeFilters({ ".gltf", ".obj" });
-
     /* Initialize Shaders */
     Shader shader("./resources/shaders/standardShader.vert", "./resources/shaders/standardShader.frag");
 
@@ -109,15 +106,14 @@ int main()
 
     // Framebuffer
     FBO sceneFBO(windowWidth, windowHeight);
-    int prevViewPanelX = windowWidth;
-    int prevViewPanelY = windowHeight;
-
-    bool guiOn = true;
 
     /// SETUP IMGUI
+    bool guiOn = true;
     EditorGui editorGui(window);
-    SceneWindow* sceneWindow = new SceneWindow(sceneFBO, model, view, projection);
-    editorGui.AddWindow(sceneWindow);
+    SceneWidget* sceneWindow = new SceneWidget(sceneFBO, model, view, projection);
+    ParametersWidget* parametersWindow = new ParametersWidget(sceneWindow, model);
+    editorGui.AddWidget(sceneWindow);
+    editorGui.AddWidget(parametersWindow);
 
     /* Loop until the user closes the window - Render Loop */
     while (window.IsAlive())
@@ -165,50 +161,16 @@ int main()
 
         if (guiOn)
         {
-            /* ImGUI RENDER */
             editorGui.Begin();
             editorGui.Render();
-
-            ImGui::Begin("Parameters");
-            if (ImGui::Button("Translate"))
-            {
-                sceneWindow->SetImGuizmoTranslate();
-            }
-            if (ImGui::Button("Rotate"))
-            {
-                sceneWindow->SetImGuizmoRotate();
-            }
-            if (ImGui::Button("Scale"))
-            {
-                sceneWindow->SetImGuizmoScale();
-            }
-            if (ImGui::Button("Reset"))
-            {
-                model = glm::mat4(1.0f);
-            }
-
-            if (ImGui::Button("Load Model"))
-            {
-                fileDialog.Open();
-            }
-            fileDialog.Display();
-
-            std::string newModelPath;
-            if (fileDialog.HasSelected())
-            {
-                newModelPath = fileDialog.GetSelected().string();
-                fileDialog.ClearSelected();
-            }
-            if (!newModelPath.empty())
-            {
-                std::cout<<newModelPath<<std::endl;
-                delete(testModel);
-                std::replace( newModelPath.begin(), newModelPath.end(), '\\', '/');
-                testModel = ModelLoader::LoadModel(newModelPath);
-            }
-            ImGui::End();
-
             editorGui.End();
+
+            if (parametersWindow->IsModelLoaded())
+            {
+                delete(testModel);
+                testModel = ModelLoader::LoadModel(parametersWindow->GetModelPath());
+                parametersWindow->ClearSelection();
+            }
         }
         else
         {

@@ -4,28 +4,28 @@
 #include <vector>
 #include <imgui/imgui.h>
 #include <glm/glm.hpp>
-#include "Gui/EditorWindow.h"
+#include "Gui/EditorWidget.h"
 #include "Window/Window.h"
 #include "Engine/FBO.hpp"
 
 class EditorGui {
 public:
     EditorGui(Window& window);
-    EditorGui(Window& window, std::vector<EditorWindow*> editorWindows);
+    EditorGui(Window& window, std::vector<EditorWidget*> editorWidgets);
 
     void Begin();
     void Render();
     void End();
     void Shutdown();
 
-    void AddWindow(EditorWindow* widget);
+    void AddWidget(EditorWidget* widget);
 
 private:
     void Init(Window& window);
     void InitDockSpace();
     void InitStyle();
 
-    std::vector<EditorWindow*> _editorWindows;
+    std::vector<EditorWidget*> _editorWidgets;
 };
 
 

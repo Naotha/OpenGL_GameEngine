@@ -1,13 +1,13 @@
-#include "EditorWindow.h"
+#include "EditorWidget.h"
 #include <imgui/imgui.h>
 
-void EditorWindow::Begin()
+void EditorWidget::Begin()
 {
     ImGui::Begin(_title.c_str());
     _size = ImGui::GetContentRegionAvail();
 }
 
-void EditorWindow::End()
+void EditorWidget::End()
 {
     ImGui::End();
 }

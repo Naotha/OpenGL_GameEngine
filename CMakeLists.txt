@@ -6,7 +6,7 @@ file(GLOB SOURCES
         src/Core/OpenGLContext.cpp
         src/Window/Window.cpp
         src/Gui/EditorGui.cpp
-        src/Gui/EditorWindow.cpp
+        src/Gui/EditorWidget.cpp
         vendor/imgui/*.cpp
         vendor/imguizmo/*.cpp
         vendor/imgui/backends/imgui_impl_glfw.cpp

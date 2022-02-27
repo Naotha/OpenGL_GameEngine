@@ -1,14 +1,14 @@
-#ifndef OPENGL_GAMEENGINE_EDITORWINDOW_H
-#define OPENGL_GAMEENGINE_EDITORWINDOW_H
+#ifndef OPENGL_GAMEENGINE_EDITORWIDGET_H
+#define OPENGL_GAMEENGINE_EDITORWIDGET_H
 
 #include <string>
 #include <vector>
 #include <glm/glm.hpp>
 #include <imgui/imgui.h>
 
-class EditorWindow {
+class EditorWidget {
 public:
-    EditorWindow(std::string title) : _title(title) {}
+    EditorWidget(std::string title) : _title(title) {}
 
     void Begin();
     void End();
@@ -22,4 +22,4 @@ protected:
 };
 
 
-#endif //OPENGL_GAMEENGINE_EDITORWINDOW_H
+#endif //OPENGL_GAMEENGINE_EDITORWIDGET_H

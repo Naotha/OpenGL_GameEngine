@@ -1,16 +1,16 @@
-#ifndef OPENGL_GAMEENGINE_SCENEWINDOW_HPP
-#define OPENGL_GAMEENGINE_SCENEWINDOW_HPP
+#ifndef OPENGL_GAMEENGINE_SCENEWIDGET_HPP
+#define OPENGL_GAMEENGINE_SCENEWIDGET_HPP
 
-#include "Gui/EditorWindow.h"
+#include "Gui/EditorWidget.h"
 #include "Engine/FBO.hpp"
 #include <imgui/imgui.h>
 #include <iostream>
 #include <glm/glm.hpp>
 
-class SceneWindow : public EditorWindow{
+class SceneWidget : public EditorWidget{
 public:
-    SceneWindow(FBO& sceneBuffer, glm::mat4& model, glm::mat4& view, glm::mat4& projection)
-        : EditorWindow("Scene"), _sceneBuffer(sceneBuffer), _model(model), _view(view), _projection(projection)
+    SceneWidget(FBO& sceneBuffer, glm::mat4& model, glm::mat4& view, glm::mat4& projection)
+        : EditorWidget("Scene"), _sceneBuffer(sceneBuffer), _model(model), _view(view), _projection(projection)
         {
             _translate = false;
             _rotate = false;
@@ -104,4 +104,4 @@ private:
     ImVec2 _prevSize;
 };
 
-#endif //OPENGL_GAMEENGINE_SCENEWINDOW_HPP
+#endif //OPENGL_GAMEENGINE_SCENEWIDGET_HPP

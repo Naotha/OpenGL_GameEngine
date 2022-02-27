@@ -9,9 +9,9 @@ EditorGui::EditorGui(Window& window)
     Init(window);
 }
 
-EditorGui::EditorGui(Window& window, std::vector<EditorWindow*> editorWindows)
+EditorGui::EditorGui(Window& window, std::vector<EditorWidget*> editorWidgets)
 {
-    _editorWindows = editorWindows;
+    _editorWidgets = editorWidgets;
     Init(window);
 }
 
@@ -107,9 +107,9 @@ void EditorGui::InitDockSpace()
 
 void EditorGui::Render()
 {
-    for (auto editorWindow : _editorWindows)
+    for (auto editorWidget : _editorWidgets)
     {
-        editorWindow->Render();
+        editorWidget->Render();
     }
 }
 
@@ -120,7 +120,7 @@ void EditorGui::Shutdown()
     ImGui::DestroyContext();
 }
 
-void EditorGui::AddWindow(EditorWindow* editorWindow)
+void EditorGui::AddWidget(EditorWidget* editorWidget)
 {
-    _editorWindows.push_back(editorWindow);
+    _editorWidgets.push_back(editorWidget);
 }
