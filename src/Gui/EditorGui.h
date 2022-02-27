@@ -11,20 +11,21 @@
 class EditorGui {
 public:
     EditorGui(Window& window);
+    EditorGui(Window& window, std::vector<EditorWindow*> editorWindows);
 
     void Begin();
-    void BeginDockSpace();
     void Render();
     void End();
     void Shutdown();
 
-    void AddWindow(EditorWindow& widget);
+    void AddWindow(EditorWindow* widget);
 
 private:
     void Init(Window& window);
+    void InitDockSpace();
     void InitStyle();
 
-    std::vector<EditorWindow> _windows;
+    std::vector<EditorWindow*> _editorWindows;
 };
 
 

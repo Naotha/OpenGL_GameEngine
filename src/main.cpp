@@ -29,6 +29,8 @@
 
 #include "Window/Window.h"
 #include "Gui/EditorGui.h"
+#include "Gui/EditorWindow.h"
+#include "Gui/SceneWindow.hpp"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
@@ -45,11 +47,6 @@ float lastX = (float)windowWidth / 2;
 float lastY = (float)windowHeight / 2;
 bool firstMouse = true;
 bool cameraMode = false;
-
-/* ImGUI */
-bool translate = false;
-bool rotate = false;
-bool scale = false;
 
 /* Time */
 float deltaTime = 0.0f;
@@ -72,10 +69,6 @@ int main()
     glfwSetMouseButtonCallback(window.GetGLFWWindow(), mouse_button_callback);
     glfwSetScrollCallback(window.GetGLFWWindow(), scroll_callback);
     glfwSetKeyCallback(window.GetGLFWWindow(), key_callback);
-
-    /// SETUP IMGUI
-    // Setup Dear ImGui context
-    EditorGui editorGui(window);
 
     ImGui::FileBrowser fileDialog;
     fileDialog.SetTitle("Load Model...");
@@ -107,7 +100,12 @@ int main()
     shader.unbind();
 
     /* Transformation Matrices */
+    glm::vec2 viewportSize = glm::vec2(window.GetWidth(), window.GetHeight());
     glm::mat4 model = glm::mat4(1.0f);
+    glm::mat4 view = camera.getViewMatrix();
+    glm::mat4 projection = glm::perspective(glm::radians(camera.fov),
+                                            viewportSize.x / viewportSize.y,
+                                            0.1f, 100.0f);
 
     // Framebuffer
     FBO sceneFBO(windowWidth, windowHeight);
@@ -116,14 +114,17 @@ int main()
 
     bool guiOn = true;
 
-    glm::vec2 viewportSize = glm::vec2(window.GetWidth(), window.GetHeight());
+    /// SETUP IMGUI
+    EditorGui editorGui(window);
+    SceneWindow* sceneWindow = new SceneWindow(sceneFBO, model, view, projection);
+    editorGui.AddWindow(sceneWindow);
 
     /* Loop until the user closes the window - Render Loop */
     while (window.IsAlive())
     {
         /// RENDER
         sceneFBO.bind();
-        glViewport(0, 0, viewportSize.x, viewportSize.y);
+        glViewport(0, 0, (int)sceneWindow->GetSize().x, (int)sceneWindow->GetSize().y);
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -149,10 +150,10 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         /* Camera Calculations */
-        glm::mat4 projection = glm::perspective(glm::radians(camera.fov),
+        projection = glm::perspective(glm::radians(camera.fov),
                                                 viewportSize.x / viewportSize.y,
                                                 0.1f, 100.0f);
-        glm::mat4 view = camera.getViewMatrix();
+        view = camera.getViewMatrix();
         glm::mat4 mvp;
         shader.bind();
         mvp = projection * view * model;
@@ -166,62 +167,20 @@ int main()
         {
             /* ImGUI RENDER */
             editorGui.Begin();
-            editorGui.BeginDockSpace();
-            ImGui::Begin("Scene");
-            ImVec2 ImViewportSize = ImGui::GetContentRegionAvail();
-            viewportSize = glm::vec2(ImViewportSize.x, ImViewportSize.y);
-
-            if ((viewportSize.x < prevViewPanelX || viewportSize.y < prevViewPanelY) ||
-                (viewportSize.x > prevViewPanelX || viewportSize.y > prevViewPanelY))
-            {
-                std::cout << "Scene panel resized: X-" << viewportSize.x << " Y-" << viewportSize.y << std::endl;
-                sceneFBO.resize(viewportSize.x, viewportSize.y);
-                prevViewPanelX = viewportSize.x;
-                prevViewPanelY = viewportSize.y;
-            }
-            ImGuizmo::SetOrthographic(false);
-            ImGuizmo::SetDrawlist();
-            ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, ImGui::GetWindowWidth(), ImGui::GetWindowHeight());
-
-            ImGui::GetWindowDrawList()->AddImage((void *)(sceneFBO.texture),
-                                                 ImVec2(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y),
-                                                 ImVec2(ImGui::GetWindowPos().x + ImGui::GetWindowWidth(),ImGui::GetWindowPos().y + ImGui::GetWindowHeight()),
-                                                 ImVec2(0, 1), ImVec2(1, 0));
-            if (translate)
-            {
-                ImGuizmo::Manipulate(glm::value_ptr(view), glm::value_ptr(projection),
-                                     ImGuizmo::OPERATION::TRANSLATE, ImGuizmo::LOCAL, glm::value_ptr(model));
-            }
-            else if (rotate)
-            {
-                ImGuizmo::Manipulate(glm::value_ptr(view), glm::value_ptr(projection),
-                                     ImGuizmo::OPERATION::ROTATE, ImGuizmo::LOCAL, glm::value_ptr(model));
-            }
-            else if (scale)
-            {
-                ImGuizmo::Manipulate(glm::value_ptr(view), glm::value_ptr(projection),
-                                     ImGuizmo::OPERATION::SCALE, ImGuizmo::LOCAL, glm::value_ptr(model));
-            }
-            ImGui::End();
+            editorGui.Render();
 
             ImGui::Begin("Parameters");
             if (ImGui::Button("Translate"))
             {
-                translate = !translate;
-                rotate = false;
-                scale = false;
+                sceneWindow->SetImGuizmoTranslate();
             }
             if (ImGui::Button("Rotate"))
             {
-                translate = false;
-                rotate = !rotate;
-                scale = false;
+                sceneWindow->SetImGuizmoRotate();
             }
             if (ImGui::Button("Scale"))
             {
-                translate = false;
-                rotate = false;
-                scale = !scale;
+                sceneWindow->SetImGuizmoScale();
             }
             if (ImGui::Button("Reset"))
             {

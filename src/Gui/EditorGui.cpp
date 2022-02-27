@@ -9,6 +9,12 @@ EditorGui::EditorGui(Window& window)
     Init(window);
 }
 
+EditorGui::EditorGui(Window& window, std::vector<EditorWindow*> editorWindows)
+{
+    _editorWindows = editorWindows;
+    Init(window);
+}
+
 void EditorGui::Init(Window& window)
 {
     IMGUI_CHECKVERSION();
@@ -62,6 +68,8 @@ void EditorGui::Begin()
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
     ImGuizmo::BeginFrame();
+
+    InitDockSpace();
 }
 
 void EditorGui::End()
@@ -78,7 +86,7 @@ void EditorGui::End()
     }
 }
 
-void EditorGui::BeginDockSpace()
+void EditorGui::InitDockSpace()
 {
     ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoTitleBar |
                                    ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
@@ -99,7 +107,10 @@ void EditorGui::BeginDockSpace()
 
 void EditorGui::Render()
 {
-
+    for (auto editorWindow : _editorWindows)
+    {
+        editorWindow->Render();
+    }
 }
 
 void EditorGui::Shutdown()
@@ -107,4 +118,9 @@ void EditorGui::Shutdown()
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
+}
+
+void EditorGui::AddWindow(EditorWindow* editorWindow)
+{
+    _editorWindows.push_back(editorWindow);
 }
