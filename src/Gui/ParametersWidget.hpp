@@ -3,6 +3,7 @@
 
 #include "Gui/EditorWidget.h"
 #include "Gui/SceneWidget.hpp"
+#include "Engine/Entity.hpp"
 #include <imgui/imgui.h>
 #include <iostream>
 #include <string>
@@ -11,7 +12,8 @@
 
 class ParametersWidget : public EditorWidget{
 public:
-    ParametersWidget(SceneWidget* sceneWindow, glm::mat4& model) : EditorWidget("Parameters"), _sceneWindow(sceneWindow), _model(model)
+    ParametersWidget(SceneWidget* sceneWindow, Entity* entity) : EditorWidget("Parameters"), _sceneWindow(sceneWindow),
+        _entity(entity)
     {
         _fileDialog.SetTitle("Load Model...");
         _fileDialog.SetTypeFilters({ ".gltf", ".obj" });
@@ -44,6 +46,11 @@ public:
         _isModelLoaded = false;
     }
 
+    void SetEntity(Entity* entity)
+    {
+        _entity = entity;
+    }
+
 private:
     void RenderButtons()
     {
@@ -61,7 +68,7 @@ private:
         }
         if (ImGui::Button("Reset"))
         {
-            _model = glm::mat4(1.0f);
+            _sceneWindow->ResetImGuizmoTransforms();
         }
     }
 
@@ -87,7 +94,7 @@ private:
     }
 
     SceneWidget* _sceneWindow;
-    glm::mat4& _model;
+    Entity* _entity;
     ImGui::FileBrowser _fileDialog;
     std::string _modelPath;
     bool _isModelLoaded;

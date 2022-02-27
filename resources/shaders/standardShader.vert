@@ -1,5 +1,6 @@
 #version 460 core
 
+uniform mat4 u_vp;
 uniform mat4 u_mvp;
 uniform mat4 u_model;
 uniform mat4 u_modelIT;
@@ -14,7 +15,8 @@ out vec3 vertFragPos;
 
 void main()
 {
-    gl_Position = u_mvp * vec4(inPos, 1.0);
+    //gl_Position = u_mvp * u_model * vec4(inPos, 1.0);
+    gl_Position = u_vp * u_model * vec4(inPos, 1.0);
 
     vertNorm = (u_modelIT * vec4(inNorm, 0.0f)).xyz;
     vertTexCoord = inTexCoord;

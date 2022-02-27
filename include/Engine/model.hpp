@@ -9,12 +9,12 @@
 class Model
 {
 public:
-    virtual void draw(Shader& shader);
+    virtual void draw(Shader& shader, glm::mat4 model);
 protected:
     std::vector<Mesh> _meshes;
 };
 
-void Model::draw(Shader& shader)
+void Model::draw(Shader& shader, glm::mat4 model)
 {
     for (auto & _mesh : _meshes)
         _mesh.draw(shader);

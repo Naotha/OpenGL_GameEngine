@@ -19,16 +19,15 @@ class ModelGLTF : public Model
 {
 public:
     ModelGLTF(const std::string& path);
-    void draw(Shader& shader) override
+    virtual void draw(Shader& shader, glm::mat4 model) override
     {
         for (auto & _mesh : _meshes)
         {   
-            // shader.bind();
-            // //TODO Make better transformation system
-            // glm::mat4 modelIT = glm::transpose(glm::inverse(_transformations[i]));
-            // shader.setUniformMat4("u_model", _transformations[i]);
-            // shader.setUniformMat4("u_modelIT", modelIT);
-            // shader.unbind();
+            shader.bind();
+            glm::mat4 modelIT = glm::transpose(glm::inverse(model));
+            shader.setUniformMat4("u_model", model);
+            shader.setUniformMat4("u_modelIT", modelIT);
+            shader.unbind();
             _mesh.draw(shader);
         }
     }

@@ -3,15 +3,18 @@
 
 #include "Gui/EditorWidget.h"
 #include "Engine/FBO.hpp"
+#include "Engine/Entity.hpp"
 #include <imgui/imgui.h>
 #include <iostream>
 #include <glm/glm.hpp>
+#include <glm/gtx/matrix_decompose.hpp>
 
 class SceneWidget : public EditorWidget{
 public:
-    SceneWidget(FBO& sceneBuffer, glm::mat4& model, glm::mat4& view, glm::mat4& projection)
-        : EditorWidget("Scene"), _sceneBuffer(sceneBuffer), _model(model), _view(view), _projection(projection)
+    SceneWidget(FBO& sceneBuffer, Entity* entity, glm::mat4& view, glm::mat4& projection)
+        : EditorWidget("Scene"), _sceneBuffer(sceneBuffer), _entity(entity), _view(view), _projection(projection)
         {
+            _model = entity->transform.GetModelMatrix();
             _translate = false;
             _rotate = false;
             _scale = false;
@@ -49,6 +52,15 @@ public:
         _scale = !_scale;
     }
 
+    void ResetImGuizmoTransforms()
+    {
+        _entity->transform.SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+        _entity->transform.SetRotation(glm::vec3(0.0f, 0.0f, 0.0f));
+        _entity->transform.SetScale(glm::vec3(1.0f, 1.0f, 1.0f));
+        _entity->Update();
+        _model = _entity->transform.GetModelMatrix();
+    }
+
 private:
     void ResizeCheck()
     {
@@ -79,21 +91,53 @@ private:
         {
             ImGuizmo::Manipulate(glm::value_ptr(_view), glm::value_ptr(_projection),
                                  ImGuizmo::OPERATION::TRANSLATE, ImGuizmo::LOCAL, glm::value_ptr(_model));
+            if (ImGuizmo::IsUsing())
+            {
+                glm::vec3 translation = _model[3];
+                _entity->transform.SetPosition(translation);
+                _entity->Update();
+                _model = _entity->transform.GetModelMatrix();
+            }
         }
         else if (_rotate)
         {
             ImGuizmo::Manipulate(glm::value_ptr(_view), glm::value_ptr(_projection),
                                  ImGuizmo::OPERATION::ROTATE, ImGuizmo::LOCAL, glm::value_ptr(_model));
+            if (ImGuizmo::IsUsing())
+            {
+                glm::vec3 scale;
+                glm::quat rotation;
+                glm::vec3 translation;
+                glm::vec3 skew;
+                glm::vec4 perspective;
+                glm::decompose(_model, scale, rotation, translation, skew, perspective);
+                _entity->transform.SetRotation(rotation);
+                _entity->Update();
+                _model = _entity->transform.GetModelMatrix();
+            }
         }
         else if (_scale)
         {
             ImGuizmo::Manipulate(glm::value_ptr(_view), glm::value_ptr(_projection),
                                  ImGuizmo::OPERATION::SCALE, ImGuizmo::LOCAL, glm::value_ptr(_model));
+            if (ImGuizmo::IsUsing())
+            {
+                glm::vec3 scale;
+                glm::quat rotation;
+                glm::vec3 translation;
+                glm::vec3 skew;
+                glm::vec4 perspective;
+                glm::decompose(_model, scale, rotation, translation, skew, perspective);
+                _entity->transform.SetScale(scale);
+                _entity->Update();
+                _model = _entity->transform.GetModelMatrix();
+            }
         }
     }
 
     FBO& _sceneBuffer;
-    glm::mat4& _model;
+    Entity* _entity;
+    glm::mat4 _model;
     glm::mat4& _view;
     glm::mat4& _projection;
 

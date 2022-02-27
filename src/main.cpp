@@ -32,6 +32,7 @@
 #include "Gui/EditorWidget.h"
 #include "Gui/SceneWidget.hpp"
 #include "Gui/ParametersWidget.hpp"
+#include "Engine/Entity.hpp"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
@@ -76,6 +77,14 @@ int main()
 
     //Model* testModel = ModelLoader::LoadModel("./resources/models/backpack/backpack.obj");
     Model* testModel = ModelLoader::LoadModel("./resources/models/shiba/scene.gltf");
+    Model* testModel2 = ModelLoader::LoadModel("./resources/models/shiba/scene.gltf");
+
+    Entity* parentShiba = new Entity(testModel);
+    Entity* childShiba = new Entity(testModel2);
+    parentShiba->AddChild(childShiba);
+    childShiba->transform.SetPosition(glm::vec3(1.0f, 0.0f, 0.0f));
+    childShiba->transform.SetScale(glm::vec3(0.5f, 0.5f, 0.5f));
+    parentShiba->Update();
 
     /* Light */
     shader.bind();
@@ -110,8 +119,8 @@ int main()
     /// SETUP IMGUI
     bool guiOn = true;
     EditorGui editorGui(window);
-    SceneWidget* sceneWindow = new SceneWidget(sceneFBO, model, view, projection);
-    ParametersWidget* parametersWindow = new ParametersWidget(sceneWindow, model);
+    SceneWidget* sceneWindow = new SceneWidget(sceneFBO, parentShiba, view, projection);
+    ParametersWidget* parametersWindow = new ParametersWidget(sceneWindow, parentShiba);
     editorGui.AddWidget(sceneWindow);
     editorGui.AddWidget(parametersWindow);
 
@@ -124,40 +133,42 @@ int main()
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        /* Camera Calculations */
+        projection = glm::perspective(glm::radians(camera.fov),
+                                      viewportSize.x / viewportSize.y,
+                                      0.1f, 100.0f);
+        view = camera.getViewMatrix();
+        glm::mat4 vp;
+        shader.bind();
+        vp = projection * view;
+        shader.setUniformMat4("u_vp", vp);
+        shader.setUniformFloat3("u_viewPos", camera.position);
+        shader.unbind();
+
         /* Models */
-        testModel->draw(shader);
+        parentShiba->Render(shader);
 
         shader.bind();
         spotLight.setPosition(camera.position);
         spotLight.setDirection(camera.getFront());
         spotLight.setLightInShader("u_spotLights[0]", shader);
+        shader.unbind();
 
         if (spotLightOn)
         {
             shader.bind();
             shader.setUniformInt("u_spotLightsNum", 1);
+            shader.unbind();
         }
         else
         {
             shader.bind();
             shader.setUniformInt("u_spotLightsNum", 0);
+            shader.unbind();
+
         }
         sceneFBO.unbind();
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        /* Camera Calculations */
-        projection = glm::perspective(glm::radians(camera.fov),
-                                                viewportSize.x / viewportSize.y,
-                                                0.1f, 100.0f);
-        view = camera.getViewMatrix();
-        glm::mat4 mvp;
-        shader.bind();
-        mvp = projection * view * model;
-        glm::mat4 modelIT = glm::transpose(glm::inverse(model));
-        shader.setUniformMat4("u_mvp", mvp);
-        shader.setUniformMat4("u_model", model);
-        shader.setUniformMat4("u_modelIT", modelIT);
-        shader.setUniformFloat3("u_viewPos", camera.position);
 
         if (guiOn)
         {
