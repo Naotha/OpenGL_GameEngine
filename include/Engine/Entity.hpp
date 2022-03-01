@@ -80,11 +80,9 @@ public:
 
     void Update()
     {
-        std::cout<<"Update called"<<"\n";
         if (_parent != nullptr)
         {
             transform.CalculateModelMatrix(_parent->transform.GetModelMatrix());
-            std::cout<<"Im a child"<<"\n";
         }
         else
         {
