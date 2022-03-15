@@ -33,6 +33,7 @@
 #include "Gui/SceneWidget.hpp"
 #include "Gui/ParametersWidget.hpp"
 #include "Engine/Entity.hpp"
+#include "EventHandler/EventHandler.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
@@ -65,12 +66,13 @@ int main()
     /// SETUP GLFW
     Window window("OpenGL Engine", windowWidth, windowHeight);
 
-    /* Set callbacks */
-    glfwSetFramebufferSizeCallback(window.GetGLFWWindow(), framebuffer_size_callback); // Change viewport when window is resized
-    glfwSetCursorPosCallback(window.GetGLFWWindow(), mouse_callback);
-    glfwSetMouseButtonCallback(window.GetGLFWWindow(), mouse_button_callback);
-    glfwSetScrollCallback(window.GetGLFWWindow(), scroll_callback);
-    glfwSetKeyCallback(window.GetGLFWWindow(), key_callback);
+    /* Set events */
+    EventHandler::Init();
+    EventHandler::SetFrameBufferSizeCallback(framebuffer_size_callback);
+    EventHandler::SetCursorPosCallback(mouse_callback);
+    EventHandler::SetMouseButtonCallback(mouse_button_callback);
+    EventHandler::SetMouseScrollCallback(scroll_callback);
+    EventHandler::SetKeyCallback(key_callback);
 
     /* Initialize Shaders */
     Shader shader("./resources/shaders/standardShader.vert", "./resources/shaders/standardShader.frag");
@@ -84,7 +86,7 @@ int main()
     parentShiba->AddChild(childShiba);
     childShiba->transform.SetPosition(glm::vec3(1.0f, 0.0f, 0.0f));
     childShiba->transform.SetScale(glm::vec3(0.5f, 0.5f, 0.5f));
-    parentShiba->Update();
+    parentShiba->UpdateTransform();
 
     /* Light */
     shader.bind();

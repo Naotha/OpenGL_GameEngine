@@ -57,7 +57,7 @@ public:
         _entity->transform.SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
         _entity->transform.SetRotation(glm::vec3(0.0f, 0.0f, 0.0f));
         _entity->transform.SetScale(glm::vec3(1.0f, 1.0f, 1.0f));
-        _entity->Update();
+        _entity->UpdateTransform();
         _model = _entity->transform.GetModelMatrix();
     }
 
@@ -95,7 +95,7 @@ private:
             {
                 glm::vec3 translation = _model[3];
                 _entity->transform.SetPosition(translation);
-                _entity->Update();
+                _entity->UpdateTransform();
                 _model = _entity->transform.GetModelMatrix();
             }
         }
@@ -112,7 +112,7 @@ private:
                 glm::vec4 perspective;
                 glm::decompose(_model, scale, rotation, translation, skew, perspective);
                 _entity->transform.SetRotation(rotation);
-                _entity->Update();
+                _entity->UpdateTransform();
                 _model = _entity->transform.GetModelMatrix();
             }
         }
@@ -129,7 +129,7 @@ private:
                 glm::vec4 perspective;
                 glm::decompose(_model, scale, rotation, translation, skew, perspective);
                 _entity->transform.SetScale(scale);
-                _entity->Update();
+                _entity->UpdateTransform();
                 _model = _entity->transform.GetModelMatrix();
             }
         }

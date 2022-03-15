@@ -22,6 +22,8 @@ public:
 
     GLFWwindow* GetGLFWWindow() { return _glfwWindow; }
 
+    static Window& GetInstance() {return *_instance; };
+
 private:
     void Init();
     void SetupCallbacks();
@@ -33,6 +35,8 @@ private:
 
     GLFWwindow* _glfwWindow;
     OpenGLContext _openglContext;
+
+    static Window* _instance;
 };
 
 

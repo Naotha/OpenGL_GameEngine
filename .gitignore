@@ -1,6 +1,7 @@
 .idea
 imgui.ini
 [Bb][Uu][Ii][Ll][Dd]
+build_debug
 
 # Prerequisites
 *.d

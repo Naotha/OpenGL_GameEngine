@@ -7,6 +7,7 @@ file(GLOB SOURCES
         src/Window/Window.cpp
         src/Gui/EditorGui.cpp
         src/Gui/EditorWidget.cpp
+        src/EventHandler/EventHandler.cpp
         vendor/imgui/*.cpp
         vendor/imguizmo/*.cpp
         vendor/imgui/backends/imgui_impl_glfw.cpp

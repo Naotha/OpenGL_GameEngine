@@ -1,8 +1,15 @@
 #include "Window/Window.h"
 #include <iostream>
 
+Window* Window::_instance = nullptr;
+
 Window::Window(std::string title, unsigned int windowWidth, unsigned int windowHeight)
 {
+    if (_instance)
+    {
+        std::cout<<"Window already exists!"<<std::endl;
+    }
+    _instance = this;
     _title = title;
     _windowWidth = windowWidth;
     _windowHeight = windowHeight;

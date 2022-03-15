@@ -40,8 +40,6 @@ public:
         _scale = newScale;
     }
 
-    bool IsUpdated() { return _isUpdated; }
-
 private:
     glm::mat4 GetLocalMatrix()
     {
@@ -78,7 +76,7 @@ public:
         _parent = parent;
     }
 
-    void Update()
+    void UpdateTransform()
     {
         if (_parent != nullptr)
         {
@@ -91,7 +89,7 @@ public:
 
         for (auto child : _children)
         {
-            child->Update();
+            child->UpdateTransform();
         }
     }
 
@@ -113,6 +111,9 @@ public:
     Transform transform;
 
 private:
+    // Unique pointerek
+    // "Fa" szerkezet helyett lehetne lista, ahol minden entity benne van alapbol, es a szulo az "indexel" hivatkozik ra
+    //          - hatuluto: a vector nem jo adatstruktura erre -> 3rd party colony adatstruktura
     std::vector<Entity*> _children;
     Entity* _parent = nullptr;
     Model* _model;
