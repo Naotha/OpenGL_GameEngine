@@ -1,58 +1,58 @@
 #include "EventHandler.h"
 #include <iostream>
 
-void EventHandler::SetFrameBufferSizeCallback(FrameBufferSizeEvent event) {
+void EventHandler::SetFrameBufferSizeCallback(FrameBufferSizeEventCall* event) {
     _frameBufferSizeCallbacks.push_back(event);
 }
 
-void EventHandler::SetCursorPosCallback(CursorPosEvent event) {
+void EventHandler::SetCursorPosCallback(CursorPosEventCall* event) {
     _cursorPosCallbacks.push_back(event);
 }
 
-void EventHandler::SetMouseButtonCallback(MouseButtonEvent event) {
+void EventHandler::SetMouseButtonCallback(MouseButtonEventCall* event) {
     _mouseButtonCallbacks.push_back(event);
 }
 
-void EventHandler::SetMouseScrollCallback(MouseScrollEvent event) {
+void EventHandler::SetMouseScrollCallback(MouseScrollEventCall* event) {
     _mouseScrollCallbacks.push_back(event);
 }
 
-void EventHandler::SetKeyCallback(KeyEvent event) {
+void EventHandler::SetKeyCallback(KeyEventCall* event) {
     _keyCallbacks.push_back(event);
 }
 
 void EventHandler::FrameBufferSizeCallback(GLFWwindow* glfwWindow, int width, int height) {
-    for (FrameBufferSizeEvent event : _frameBufferSizeCallbacks)
+    for (FrameBufferSizeEventCall* event : _frameBufferSizeCallbacks)
     {
-        event(glfwWindow, height, width);
+        event->call(glfwWindow, width, height);
     }
 }
 
 void EventHandler::CursorPosCallback(GLFWwindow* glfwWindow, double xpos, double ypos) {
-    for (CursorPosEvent event : _cursorPosCallbacks)
+    for (CursorPosEventCall* event : _cursorPosCallbacks)
     {
-        event(glfwWindow, xpos, ypos);
+        event->call(glfwWindow, xpos, ypos);
     }
 }
 
 void EventHandler::MouseButtonCallback(GLFWwindow* glfwWindow, int button, int action, int mods) {
-    for (MouseButtonEvent event : _mouseButtonCallbacks)
+    for (MouseButtonEventCall* event : _mouseButtonCallbacks)
     {
-        event(glfwWindow, button, action, mods);
+        event->call(glfwWindow, button, action, mods);
     }
 }
 
 void EventHandler::MouseScrollCallback(GLFWwindow* glfwWindow, double xoffset, double yoffset) {
-    for (MouseScrollEvent event : _mouseScrollCallbacks)
+    for (MouseScrollEventCall* event : _mouseScrollCallbacks)
     {
-        event(glfwWindow, xoffset, yoffset);
+        event->call(glfwWindow, xoffset, yoffset);
     }
 }
 
 void EventHandler::KeyCallback(GLFWwindow* glfwWindow, int key, int scancode, int action, int mods) {
-    for (KeyEvent event : _keyCallbacks)
+    for (KeyEventCall* event : _keyCallbacks)
     {
-        event(glfwWindow, key, scancode, action, mods);
+        event->call(glfwWindow, key, scancode, action, mods);
     }
 }
 

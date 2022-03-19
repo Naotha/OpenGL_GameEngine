@@ -4,6 +4,7 @@ project(OpenGL_GameEngine)
 file(GLOB SOURCES
         src/main.cpp
         src/Core/OpenGLContext.cpp
+        src/Core/Application.cpp
         src/Window/Window.cpp
         src/Gui/EditorGui.cpp
         src/Gui/EditorWidget.cpp

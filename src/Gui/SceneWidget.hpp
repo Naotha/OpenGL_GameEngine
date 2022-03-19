@@ -61,9 +61,16 @@ public:
         _model = _entity->transform.GetModelMatrix();
     }
 
+    void Disable()
+    {
+        _size = ImVec2(0,0);
+        _prevSize = ImVec2(0,0);
+    }
+
 private:
     void ResizeCheck()
     {
+        _size = ImGui::GetContentRegionAvail();
         if ((_size.x < _prevSize.x || _size.y < _prevSize.y) ||
             (_size.x > _prevSize.x || _size.y > _prevSize.y))
         {

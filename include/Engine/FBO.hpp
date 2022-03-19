@@ -11,8 +11,11 @@ public:
     unsigned int texture;
     unsigned int depthRenderBuffer;
 
+    FBO() = default;
+
     FBO(int width, int height)
     {
+        size = glm::vec2(width, height);
         glGenFramebuffers(1, &ID);
         glBindFramebuffer(GL_FRAMEBUFFER, ID);
 
@@ -35,6 +38,7 @@ public:
 
     void resize(int width, int height)
     {
+        size = glm::vec2(width, height);
         glBindFramebuffer(GL_FRAMEBUFFER, ID);
 
         glBindTexture(GL_TEXTURE_2D, texture);
@@ -49,9 +53,17 @@ public:
         glBindRenderbuffer(GL_RENDERBUFFER, 0);
     }
 
+    glm::vec2 GetSize()
+    {
+        return size;
+    }
+
     void bind() { glBindFramebuffer(GL_FRAMEBUFFER, ID); }
     void unbind() { glBindFramebuffer(GL_FRAMEBUFFER, 0); }
     void deleteFBO() { glDeleteFramebuffers(1, &ID); }
+
+private:
+    glm::vec2 size;
 };
 
 #endif

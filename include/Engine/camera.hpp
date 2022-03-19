@@ -44,6 +44,8 @@ private:
     float _yaw;
     float _pitch;
 
+    bool _isEnabled;
+
     void _updateCameraVectors();
 };
 

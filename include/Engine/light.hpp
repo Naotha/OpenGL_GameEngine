@@ -23,6 +23,8 @@ protected:
 class DirectionalLight: public Light
 {
 public:
+    DirectionalLight() = default;
+
     DirectionalLight(glm::vec3 direction, glm::vec3 ambient, glm::vec3 diffuse, glm::vec3 specular) : _direction(direction)
     {
         _ambient = ambient;
@@ -60,6 +62,8 @@ const Attenuation CONST_ATTENUATION{1.0f, 0.09f, 0.032f};
 class PointLight: public Light
 {
 public:
+    PointLight() = default;
+
     PointLight(glm::vec3 position, Attenuation attenuation,
                glm::vec3 ambient, glm::vec3 diffuse, glm::vec3 specular) :
                _position(position), _attenuation(attenuation)
@@ -102,6 +106,8 @@ private:
 class SpotLight: public Light
 {
 public:
+    SpotLight() = default;
+
     SpotLight(glm::vec3 position, glm::vec3 direction, float innerCutOff, float outerCutOff,
               Attenuation attenuation, glm::vec3 ambient, glm::vec3 diffuse, glm::vec3 specular) :
     _position(position), _direction(direction), _innerCutOff(innerCutOff), _outerCutOff(outerCutOff),

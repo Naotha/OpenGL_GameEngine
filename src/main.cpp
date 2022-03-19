@@ -34,104 +34,241 @@
 #include "Gui/ParametersWidget.hpp"
 #include "Engine/Entity.hpp"
 #include "EventHandler/EventHandler.h"
+#include "Core/Application.h"
 
-void framebuffer_size_callback(GLFWwindow* window, int width, int height);
-void processInput(GLFWwindow* window);
-void mouse_callback(GLFWwindow* window, double xPos, double yPos);
-void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
-void scroll_callback(GLFWwindow* window, double xOffset, double yOffset);
-void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
-void calculateDeltaTime();
+class MyApplication : public Application{
+public:
+    float lastX;
+    float lastY;
+    bool firstMouse;
+    bool cameraMode;
+    float deltaTime;
+    float lastFrame;
+    Camera camera;
+    bool spotLightOn;
 
-/* Window, cursor */
-int windowWidth = 1280;
-int windowHeight = 720;
-float lastX = (float)windowWidth / 2;
-float lastY = (float)windowHeight / 2;
-bool firstMouse = true;
-bool cameraMode = false;
+    Shader shader;
+    Model* testModel;
+    Model* testModel2;
+    Entity* parentShiba;
+    Entity* childShiba;
 
-/* Time */
-float deltaTime = 0.0f;
-float lastFrame = 0.0f;
+    glm::vec3 lightPos;
+    glm::vec3 lightCol;
+    glm::vec3 ambientCol;
+    glm::vec3 diffuseCol;
+    DirectionalLight dirLight;
+    SpotLight spotLight;
 
-/* Camera */
-Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+    glm::vec2 viewportSize;
+    glm::mat4 model;
+    glm::mat4 view;
+    glm::mat4 projection;
 
-/* Light */
-bool spotLightOn = false;
+    FBO sceneFBO;
 
-int main()
-{
-    /// SETUP GLFW
-    Window window("OpenGL Engine", windowWidth, windowHeight);
-
-    /* Set events */
-    EventHandler::Init();
-    EventHandler::SetFrameBufferSizeCallback(framebuffer_size_callback);
-    EventHandler::SetCursorPosCallback(mouse_callback);
-    EventHandler::SetMouseButtonCallback(mouse_button_callback);
-    EventHandler::SetMouseScrollCallback(scroll_callback);
-    EventHandler::SetKeyCallback(key_callback);
-
-    /* Initialize Shaders */
-    Shader shader("./resources/shaders/standardShader.vert", "./resources/shaders/standardShader.frag");
-
-    //Model* testModel = ModelLoader::LoadModel("./resources/models/backpack/backpack.obj");
-    Model* testModel = ModelLoader::LoadModel("./resources/models/shiba/scene.gltf");
-    Model* testModel2 = ModelLoader::LoadModel("./resources/models/shiba/scene.gltf");
-
-    Entity* parentShiba = new Entity(testModel);
-    Entity* childShiba = new Entity(testModel2);
-    parentShiba->AddChild(childShiba);
-    childShiba->transform.SetPosition(glm::vec3(1.0f, 0.0f, 0.0f));
-    childShiba->transform.SetScale(glm::vec3(0.5f, 0.5f, 0.5f));
-    parentShiba->UpdateTransform();
-
-    /* Light */
-    shader.bind();
-    shader.setUniformFloat("u_material.shininess", 32.0f);
-    glm::vec3 lightPos(1.0f, 1.0f, 1.0f);
-    glm::vec3 lightCol(1.0f, 1.0f, 1.0f);
-    glm::vec3 ambientCol = lightCol * glm::vec3(0.2f);
-    glm::vec3 diffuseCol = lightCol * glm::vec3(0.8f);
-    shader.unbind();
-
-    // Light Types
-    DirectionalLight dirLight(-lightPos, ambientCol, diffuseCol, lightCol);
-    dirLight.setLightInShader("u_dirLight", shader);
-
-    SpotLight spotLight(camera.position, camera.getFront(), glm::cos(glm::radians(12.5f)), glm::cos(glm::radians(17.5f)), CONST_ATTENUATION, ambientCol, diffuseCol, lightCol);
-    spotLight.setLightInShader("u_spotLights[0]", shader);
-    shader.bind();
-    shader.setUniformInt("u_spotLightsNum", 1);
-    shader.unbind();
-
-    /* Transformation Matrices */
-    glm::vec2 viewportSize = glm::vec2(window.GetWidth(), window.GetHeight());
-    glm::mat4 model = glm::mat4(1.0f);
-    glm::mat4 view = camera.getViewMatrix();
-    glm::mat4 projection = glm::perspective(glm::radians(camera.fov),
-                                            viewportSize.x / viewportSize.y,
-                                            0.1f, 100.0f);
-
-    // Framebuffer
-    FBO sceneFBO(windowWidth, windowHeight);
-
-    /// SETUP IMGUI
     bool guiOn = true;
-    EditorGui editorGui(window);
-    SceneWidget* sceneWindow = new SceneWidget(sceneFBO, parentShiba, view, projection);
-    ParametersWidget* parametersWindow = new ParametersWidget(sceneWindow, parentShiba);
-    editorGui.AddWidget(sceneWindow);
-    editorGui.AddWidget(parametersWindow);
+    EditorGui* editorGui;
+    SceneWidget* sceneWindow;
+    ParametersWidget* parametersWindow;
 
-    /* Loop until the user closes the window - Render Loop */
-    while (window.IsAlive())
+    FrameBufferSizeEventCall* frameBufferSizeEvent;
+    CursorPosEventCall* cursorPosEvent;
+    MouseButtonEventCall* mouseButtonEvent;
+    MouseScrollEventCall* mouseScrollEvent;
+    KeyEventCall* keyEvent;
+    KeyEventCall* guiKeyEvent;
+
+    MyApplication(Window& window) : Application(window), camera(glm::vec3(0.0f, 0.0f, 3.0f)),
+    shader("./resources/shaders/standardShader.vert", "./resources/shaders/standardShader.frag")
+    {
+        lastX = (float)window.GetWidth() / 2;
+        lastY = (float)window.GetHeight() / 2;
+        firstMouse = true;
+        cameraMode = false;
+        deltaTime = 0.0f;
+        lastFrame = 0.0f;
+        spotLightOn = false;
+    };
+
+    void framebuffer_size_callback(GLFWwindow* glfwWindow, int width, int height)
+    {
+        window.SetWidth(width);
+        window.SetHeight(height);
+        glViewport(0, 0, width, height);
+        if (!guiOn)
+        {
+            sceneFBO.resize(window.GetWidth(), window.GetHeight());
+        }
+    }
+
+    void processInput(GLFWwindow* glfwWindow)
+    {
+        if (glfwGetKey(glfwWindow, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+            glfwSetWindowShouldClose(glfwWindow, true);
+
+        if (cameraMode)
+        {
+            if (glfwGetKey(glfwWindow, GLFW_KEY_W) == GLFW_PRESS)
+                camera.processKeyboard(FORWARD, deltaTime);
+            if (glfwGetKey(glfwWindow, GLFW_KEY_S) == GLFW_PRESS)
+                camera.processKeyboard(BACKWARD, deltaTime);
+            if (glfwGetKey(glfwWindow, GLFW_KEY_A) == GLFW_PRESS)
+                camera.processKeyboard(LEFT, deltaTime);
+            if (glfwGetKey(glfwWindow, GLFW_KEY_D) == GLFW_PRESS)
+                camera.processKeyboard(RIGHT, deltaTime);
+        }
+    }
+
+    void mouse_button_callback(GLFWwindow* glfwWindow, int button, int action, int mods)
+    {
+        if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_RELEASE)
+        {
+            cameraMode = false;
+            firstMouse = true;
+            glfwSetInputMode(glfwWindow, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        }
+        if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
+        {
+            cameraMode = true;
+            glfwSetInputMode(glfwWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        }
+    }
+
+    void mouse_callback(GLFWwindow* glfwWindow, double xPos, double yPos)
+    {
+        if (cameraMode)
+        {
+            // Circumvent sudden jump on focus gain
+            if (firstMouse)
+            {
+                lastX = xPos;
+                lastY = yPos;
+                firstMouse = false;
+            }
+
+            // Calculate mouse offset
+            float xOffset = xPos - lastX;
+            float yOffset = lastY - yPos;
+            lastX = xPos;
+            lastY = yPos;
+
+            camera.processMouseMovement(xOffset, yOffset);
+        }
+    }
+
+    void key_callback(GLFWwindow* glfwWindow, int key, int scancode, int action, int mods)
+    {
+        if (key == GLFW_KEY_E && action == GLFW_PRESS)
+        {
+            spotLightOn = !spotLightOn;
+        }
+    }
+
+    void gui_key_callback(GLFWwindow* glfwWindow, int key, int scancode, int action, int mods)
+    {
+        if (key == GLFW_KEY_Q && action == GLFW_PRESS && mods == GLFW_MOD_CONTROL)
+        {
+            guiOn = !guiOn;
+
+            if (!guiOn)
+            {
+                sceneFBO.resize(window.GetWidth(), window.GetHeight());
+                std::cout<<window.GetWidth()<<" "<<window.GetHeight()<<std::endl;
+                sceneWindow->Disable();
+            }
+        }
+    }
+
+    void scroll_callback(GLFWwindow* glfwWindow, double xOffset, double yOffset)
+    {
+        camera.processMouseScroll(yOffset);
+    }
+
+    void calculateDeltaTime()
+    {
+        float currentFrame = glfwGetTime();
+        deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame;
+    }
+
+    void Setup() override
+    {
+        frameBufferSizeEvent = new FrameBufferSizeEvent(this, &MyApplication::framebuffer_size_callback);
+        cursorPosEvent = new CursorPosEvent(this, &MyApplication::mouse_callback);
+        mouseButtonEvent = new MouseButtonEvent(this, &MyApplication::mouse_button_callback);
+        mouseScrollEvent = new MouseScrollEvent(this, &MyApplication::scroll_callback);
+        keyEvent = new KeyEvent(this, &MyApplication::key_callback);
+        guiKeyEvent = new KeyEvent(this, &MyApplication::gui_key_callback);
+
+        EventHandler::SetFrameBufferSizeCallback(frameBufferSizeEvent);
+        EventHandler::SetCursorPosCallback(cursorPosEvent);
+        EventHandler::SetMouseButtonCallback(mouseButtonEvent);
+        EventHandler::SetMouseScrollCallback(mouseScrollEvent);
+        EventHandler::SetKeyCallback(keyEvent);
+        EventHandler::SetKeyCallback(guiKeyEvent);
+
+        //Model* testModel = ModelLoader::LoadModel("./resources/models/backpack/backpack.obj");
+        testModel = ModelLoader::LoadModel("./resources/models/shiba/scene.gltf");
+        testModel2 = ModelLoader::LoadModel("./resources/models/shiba/scene.gltf");
+
+        parentShiba = new Entity(testModel);
+        childShiba = new Entity(testModel2);
+        parentShiba->AddChild(childShiba);
+        childShiba->transform.SetPosition(glm::vec3(1.0f, 0.0f, 0.0f));
+        childShiba->transform.SetScale(glm::vec3(0.5f, 0.5f, 0.5f));
+        parentShiba->UpdateTransform();
+
+        /* Light */
+        shader.bind();
+        shader.setUniformFloat("u_material.shininess", 32.0f);
+        lightPos = glm::vec3(1.0f, 1.0f, 1.0f);
+        lightCol = glm::vec3 (1.0f, 1.0f, 1.0f);
+        ambientCol = lightCol * glm::vec3(0.2f);
+        diffuseCol = lightCol * glm::vec3(0.8f);
+        shader.unbind();
+
+        // Light Types
+        dirLight = DirectionalLight(-lightPos, ambientCol, diffuseCol, lightCol);
+        dirLight.setLightInShader("u_dirLight", shader);
+
+        spotLight = SpotLight(camera.position, camera.getFront(), glm::cos(glm::radians(12.5f)), glm::cos(glm::radians(17.5f)), CONST_ATTENUATION, ambientCol, diffuseCol, lightCol);
+        spotLight.setLightInShader("u_spotLights[0]", shader);
+        shader.bind();
+        shader.setUniformInt("u_spotLightsNum", 1);
+        shader.unbind();
+
+        /* Transformation Matrices */
+        viewportSize = glm::vec2(window.GetWidth(), window.GetHeight());
+        model = glm::mat4(1.0f);
+        view = camera.getViewMatrix();
+        projection = glm::perspective(glm::radians(camera.fov),
+                                                viewportSize.x / viewportSize.y,
+                                                0.1f, 100.0f);
+
+        // Framebuffer
+        sceneFBO = FBO(window.GetWidth(), window.GetHeight());
+
+        /// SETUP IMGUI
+        editorGui = new EditorGui(window);
+        sceneWindow = new SceneWidget(sceneFBO, parentShiba, view, projection);
+        parametersWindow = new ParametersWidget(sceneWindow, parentShiba);
+        editorGui->AddWidget(sceneWindow);
+        editorGui->AddWidget(parametersWindow);
+    }
+
+    void OnLoop() override
     {
         /// RENDER
         sceneFBO.bind();
-        glViewport(0, 0, (int)sceneWindow->GetSize().x, (int)sceneWindow->GetSize().y);
+        if (guiOn)
+        {
+            glViewport(0, 0, (int)sceneWindow->GetSize().x, (int)sceneWindow->GetSize().y);
+        }
+        else
+        {
+            glViewport(0, 0, window.GetWidth(), window.GetHeight());
+        }
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -174,9 +311,9 @@ int main()
 
         if (guiOn)
         {
-            editorGui.Begin();
-            editorGui.Render();
-            editorGui.End();
+            editorGui->Begin();
+            editorGui->Render();
+            editorGui->End();
 
             if (parametersWindow->IsModelLoaded())
             {
@@ -197,92 +334,13 @@ int main()
         processInput(window.GetGLFWWindow());
         window.OnUpdate();
         calculateDeltaTime();
-    }
+    };
+};
 
-    // Cleanup
-    editorGui.Shutdown();
-    window.Shutdown();
+int main()
+{
+    Window window("OpenGL Engine", 1280, 720);
+    MyApplication myApp(window);
+    myApp.Run();
     return 0;
-}
-
-void framebuffer_size_callback(GLFWwindow* window, int width, int height)
-{
-    windowWidth = width;
-    windowHeight = height;
-    glViewport(0, 0, width, height);
-}
-
-void processInput(GLFWwindow* window)
-{
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, true);
-
-    if (cameraMode)
-    {
-        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-            camera.processKeyboard(FORWARD, deltaTime);
-        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-            camera.processKeyboard(BACKWARD, deltaTime);
-        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-            camera.processKeyboard(LEFT, deltaTime);
-        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-            camera.processKeyboard(RIGHT, deltaTime);
-    }
-}
-
-void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
-{
-    if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_RELEASE)
-    {
-        cameraMode = false;
-        firstMouse = true;
-        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-    }
-    if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
-    {
-        cameraMode = true;
-        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-    }
-}
-
-void mouse_callback(GLFWwindow* window, double xPos, double yPos)
-{
-    if (cameraMode)
-    {
-        // Circumvent sudden jump on focus gain
-        if (firstMouse)
-        {
-            lastX = xPos;
-            lastY = yPos;
-            firstMouse = false;
-        }
-
-        // Calculate mouse offset
-        float xOffset = xPos - lastX;
-        float yOffset = lastY - yPos;
-        lastX = xPos;
-        lastY = yPos;
-
-        camera.processMouseMovement(xOffset, yOffset);
-    }
-}
-
-void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
-{
-    if (key == GLFW_KEY_E && action == GLFW_PRESS)
-    {
-        spotLightOn = !spotLightOn;
-    }
-}
-
-void scroll_callback(GLFWwindow* window, double xOffset, double yOffset)
-{
-    camera.processMouseScroll(yOffset);
-}
-
-void calculateDeltaTime()
-{
-    float currentFrame = glfwGetTime();
-    deltaTime = currentFrame - lastFrame;
-    lastFrame = currentFrame;
 }
