@@ -32,9 +32,13 @@
 #include "Gui/EditorWidget.h"
 #include "Gui/SceneWidget.hpp"
 #include "Gui/ParametersWidget.hpp"
-#include "Engine/Entity.hpp"
+#include "GameObject/GameObject.hpp"
 #include "EventHandler/EventHandler.h"
 #include "Core/Application.h"
+#include "GameObject/Scene.hpp"
+#include "GameObject/GameObject.hpp"
+#include "GameComponent/GameComponent.hpp"
+#include "GameComponent/ModelRenderer.hpp"
 
 class MyApplication : public Application{
 public:
@@ -49,9 +53,10 @@ public:
 
     Shader shader;
     Model* testModel;
-    Model* testModel2;
-    Entity* parentShiba;
-    Entity* childShiba;
+    ModelRenderer* modelRenderer;
+    Scene scene;
+    GameObject* parentShiba;
+    GameObject* childShiba;
 
     glm::vec3 lightPos;
     glm::vec3 lightCol;
@@ -192,7 +197,7 @@ public:
         lastFrame = currentFrame;
     }
 
-    void Setup() override
+    void RegisterEvents()
     {
         frameBufferSizeEvent = new FrameBufferSizeEvent(this, &MyApplication::framebuffer_size_callback);
         cursorPosEvent = new CursorPosEvent(this, &MyApplication::mouse_callback);
@@ -207,28 +212,36 @@ public:
         EventHandler::SetMouseScrollCallback(mouseScrollEvent);
         EventHandler::SetKeyCallback(keyEvent);
         EventHandler::SetKeyCallback(guiKeyEvent);
+    }
 
-        //Model* testModel = ModelLoader::LoadModel("./resources/models/backpack/backpack.obj");
+    void Setup() override
+    {
+        RegisterEvents();
+
         testModel = ModelLoader::LoadModel("./resources/models/shiba/scene.gltf");
-        testModel2 = ModelLoader::LoadModel("./resources/models/shiba/scene.gltf");
+        modelRenderer = new ModelRenderer(testModel, shader);
 
-        parentShiba = new Entity(testModel);
-        childShiba = new Entity(testModel2);
+        parentShiba = new GameObject();
+        childShiba = new GameObject();
+        childShiba->SetPosition(glm::vec3(1.0f, 0.0f, 0.0f));
+        childShiba->SetScale(glm::vec3(0.5f, 0.5f, 0.5f));
+
+        parentShiba->AddComponent(modelRenderer);
+        childShiba->AddComponent(modelRenderer);
+
         parentShiba->AddChild(childShiba);
-        childShiba->transform.SetPosition(glm::vec3(1.0f, 0.0f, 0.0f));
-        childShiba->transform.SetScale(glm::vec3(0.5f, 0.5f, 0.5f));
-        parentShiba->UpdateTransform();
+        scene.AddGameObject(parentShiba);
 
         /* Light */
         shader.bind();
         shader.setUniformFloat("u_material.shininess", 32.0f);
-        lightPos = glm::vec3(1.0f, 1.0f, 1.0f);
-        lightCol = glm::vec3 (1.0f, 1.0f, 1.0f);
-        ambientCol = lightCol * glm::vec3(0.2f);
-        diffuseCol = lightCol * glm::vec3(0.8f);
         shader.unbind();
 
         // Light Types
+        lightPos = glm::vec3(1.0f, 1.0f, 1.0f);
+        lightCol = glm::vec3 (1.0f, 1.0f, 1.0f);
+        ambientCol = lightCol * 0.2f;
+        diffuseCol = lightCol * 0.8f;
         dirLight = DirectionalLight(-lightPos, ambientCol, diffuseCol, lightCol);
         dirLight.setLightInShader("u_dirLight", shader);
 
@@ -244,7 +257,7 @@ public:
         view = camera.getViewMatrix();
         projection = glm::perspective(glm::radians(camera.fov),
                                                 viewportSize.x / viewportSize.y,
-                                                0.1f, 100.0f);
+                                                0.1f, 10000.0f);
 
         // Framebuffer
         sceneFBO = FBO(window.GetWidth(), window.GetHeight());
@@ -275,7 +288,7 @@ public:
         /* Camera Calculations */
         projection = glm::perspective(glm::radians(camera.fov),
                                       viewportSize.x / viewportSize.y,
-                                      0.1f, 100.0f);
+                                      0.1f, 10000.0f);
         view = camera.getViewMatrix();
         glm::mat4 vp;
         shader.bind();
@@ -284,8 +297,9 @@ public:
         shader.setUniformFloat3("u_viewPos", camera.position);
         shader.unbind();
 
-        /* Models */
-        parentShiba->Render(shader);
+        // Scene Render
+        scene.Update();
+        scene.Render();
 
         shader.bind();
         spotLight.setPosition(camera.position);

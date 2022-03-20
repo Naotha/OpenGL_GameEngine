@@ -3,7 +3,7 @@
 
 #include "Gui/EditorWidget.h"
 #include "Gui/SceneWidget.hpp"
-#include "Engine/Entity.hpp"
+#include "GameObject/GameObject.hpp"
 #include <imgui/imgui.h>
 #include <iostream>
 #include <string>
@@ -12,8 +12,8 @@
 
 class ParametersWidget : public EditorWidget{
 public:
-    ParametersWidget(SceneWidget* sceneWindow, Entity* entity) : EditorWidget("Parameters"), _sceneWindow(sceneWindow),
-        _entity(entity)
+    ParametersWidget(SceneWidget* sceneWindow, GameObject* entity) : EditorWidget("Parameters"), _sceneWindow(sceneWindow),
+                                                                     _entity(entity)
     {
         _fileDialog.SetTitle("Load Model...");
         _fileDialog.SetTypeFilters({ ".gltf", ".obj" });
@@ -46,7 +46,7 @@ public:
         _isModelLoaded = false;
     }
 
-    void SetEntity(Entity* entity)
+    void SetEntity(GameObject* entity)
     {
         _entity = entity;
     }
@@ -94,7 +94,7 @@ private:
     }
 
     SceneWidget* _sceneWindow;
-    Entity* _entity;
+    GameObject* _entity;
     ImGui::FileBrowser _fileDialog;
     std::string _modelPath;
     bool _isModelLoaded;

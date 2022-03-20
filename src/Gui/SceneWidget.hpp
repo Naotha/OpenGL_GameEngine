@@ -3,7 +3,7 @@
 
 #include "Gui/EditorWidget.h"
 #include "Engine/FBO.hpp"
-#include "Engine/Entity.hpp"
+#include "GameObject/GameObject.hpp"
 #include <imgui/imgui.h>
 #include <iostream>
 #include <glm/glm.hpp>
@@ -11,7 +11,7 @@
 
 class SceneWidget : public EditorWidget{
 public:
-    SceneWidget(FBO& sceneBuffer, Entity* entity, glm::mat4& view, glm::mat4& projection)
+    SceneWidget(FBO& sceneBuffer, GameObject* entity, glm::mat4& view, glm::mat4& projection)
         : EditorWidget("Scene"), _sceneBuffer(sceneBuffer), _entity(entity), _view(view), _projection(projection)
         {
             _model = entity->transform.GetModelMatrix();
@@ -57,7 +57,7 @@ public:
         _entity->transform.SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
         _entity->transform.SetRotation(glm::vec3(0.0f, 0.0f, 0.0f));
         _entity->transform.SetScale(glm::vec3(1.0f, 1.0f, 1.0f));
-        _entity->UpdateTransform();
+        _entity->Update();
         _model = _entity->transform.GetModelMatrix();
     }
 
@@ -101,8 +101,7 @@ private:
             if (ImGuizmo::IsUsing())
             {
                 glm::vec3 translation = _model[3];
-                _entity->transform.SetPosition(translation);
-                _entity->UpdateTransform();
+                _entity->SetPosition(translation);
                 _model = _entity->transform.GetModelMatrix();
             }
         }
@@ -118,8 +117,7 @@ private:
                 glm::vec3 skew;
                 glm::vec4 perspective;
                 glm::decompose(_model, scale, rotation, translation, skew, perspective);
-                _entity->transform.SetRotation(rotation);
-                _entity->UpdateTransform();
+                _entity->SetRotation(rotation);
                 _model = _entity->transform.GetModelMatrix();
             }
         }
@@ -135,15 +133,14 @@ private:
                 glm::vec3 skew;
                 glm::vec4 perspective;
                 glm::decompose(_model, scale, rotation, translation, skew, perspective);
-                _entity->transform.SetScale(scale);
-                _entity->UpdateTransform();
+                _entity->SetScale(scale);
                 _model = _entity->transform.GetModelMatrix();
             }
         }
     }
 
     FBO& _sceneBuffer;
-    Entity* _entity;
+    GameObject* _entity;
     glm::mat4 _model;
     glm::mat4& _view;
     glm::mat4& _projection;
