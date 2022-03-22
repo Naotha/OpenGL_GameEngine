@@ -12,6 +12,9 @@ public:
     void Render(Transform transform) override
     {
         model->draw(shader, transform.GetModelMatrix());
+        shader.bind();
+        shader.setUniformFloat("u_material.shininess", 32.0f);
+        shader.unbind();
     }
 
 private:

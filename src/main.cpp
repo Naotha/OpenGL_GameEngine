@@ -65,11 +65,6 @@ public:
     DirectionalLight dirLight;
     SpotLight spotLight;
 
-    glm::vec2 viewportSize;
-    glm::mat4 model;
-    glm::mat4 view;
-    glm::mat4 projection;
-
     FBO sceneFBO;
 
     bool guiOn = true;
@@ -94,6 +89,8 @@ public:
         deltaTime = 0.0f;
         lastFrame = 0.0f;
         spotLightOn = false;
+        sceneFBO = renderer->GetFBO();
+        sceneFBO.resize(window.GetWidth(), window.GetHeight());
     };
 
     void framebuffer_size_callback(GLFWwindow* glfwWindow, int width, int height)
@@ -221,8 +218,8 @@ public:
         testModel = ModelLoader::LoadModel("./resources/models/shiba/scene.gltf");
         modelRenderer = new ModelRenderer(testModel, shader);
 
-        parentShiba = new GameObject();
-        childShiba = new GameObject();
+        parentShiba = scene.CreateGameObject();
+        childShiba = scene.CreateGameObject();
         childShiba->SetPosition(glm::vec3(1.0f, 0.0f, 0.0f));
         childShiba->SetScale(glm::vec3(0.5f, 0.5f, 0.5f));
 
@@ -230,7 +227,6 @@ public:
         childShiba->AddComponent(modelRenderer);
 
         parentShiba->AddChild(childShiba);
-        scene.AddGameObject(parentShiba);
 
         /* Light */
         shader.bind();
@@ -251,20 +247,13 @@ public:
         shader.setUniformInt("u_spotLightsNum", 1);
         shader.unbind();
 
-        /* Transformation Matrices */
-        viewportSize = glm::vec2(window.GetWidth(), window.GetHeight());
-        model = glm::mat4(1.0f);
-        view = camera.getViewMatrix();
-        projection = glm::perspective(glm::radians(camera.fov),
-                                                viewportSize.x / viewportSize.y,
-                                                0.1f, 10000.0f);
-
         // Framebuffer
-        sceneFBO = FBO(window.GetWidth(), window.GetHeight());
+        glm::vec2 viewPortSize = glm::vec2(window.GetWidth(), window.GetHeight());
+        renderer->Init(camera, viewPortSize);
 
         /// SETUP IMGUI
         editorGui = new EditorGui(window);
-        sceneWindow = new SceneWidget(sceneFBO, parentShiba, view, projection);
+        sceneWindow = new SceneWidget(sceneFBO, parentShiba, renderer->GetView(), renderer->GetProjection());
         parametersWindow = new ParametersWidget(sceneWindow, parentShiba);
         editorGui->AddWidget(sceneWindow);
         editorGui->AddWidget(parametersWindow);
@@ -272,34 +261,22 @@ public:
 
     void OnLoop() override
     {
-        /// RENDER
-        sceneFBO.bind();
+        /// PRE-RENDER
         if (guiOn)
         {
-            glViewport(0, 0, (int)sceneWindow->GetSize().x, (int)sceneWindow->GetSize().y);
+            glm::vec2 viewport = glm::vec2(sceneWindow->GetSize().x, sceneWindow->GetSize().y);
+            if (viewport.x != 0 && viewport.y != 0)
+                renderer->SetViewportSize(viewport);
         }
         else
         {
-            glViewport(0, 0, window.GetWidth(), window.GetHeight());
+            glm::vec2 viewport = glm::vec2(window.GetWidth(), window.GetHeight());
+            renderer->SetViewportSize(viewport);
         }
-        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        renderer->PreRender(camera, shader);
 
-        /* Camera Calculations */
-        projection = glm::perspective(glm::radians(camera.fov),
-                                      viewportSize.x / viewportSize.y,
-                                      0.1f, 10000.0f);
-        view = camera.getViewMatrix();
-        glm::mat4 vp;
-        shader.bind();
-        vp = projection * view;
-        shader.setUniformMat4("u_vp", vp);
-        shader.setUniformFloat3("u_viewPos", camera.position);
-        shader.unbind();
-
-        // Scene Render
-        scene.Update();
-        scene.Render();
+        /// RENDER
+        renderer->Render(scene);
 
         shader.bind();
         spotLight.setPosition(camera.position);
@@ -320,31 +297,22 @@ public:
             shader.unbind();
 
         }
-        sceneFBO.unbind();
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        /// POST-RENDER
+        renderer->PostRender();
 
         if (guiOn)
         {
             editorGui->Begin();
             editorGui->Render();
             editorGui->End();
-
-            if (parametersWindow->IsModelLoaded())
-            {
-                delete(testModel);
-                testModel = ModelLoader::LoadModel(parametersWindow->GetModelPath());
-                parametersWindow->ClearSelection();
-            }
         }
         else
         {
-            glBindFramebuffer(GL_READ_FRAMEBUFFER, sceneFBO.ID);
-            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-            glBlitFramebuffer(0, 0, viewportSize.x, viewportSize.y, 0, 0, window.GetWidth(), window.GetHeight(),
-                              GL_COLOR_BUFFER_BIT, GL_NEAREST);
+            renderer->DrawToWindow(window);
         }
 
-        /// POST RENDER
+        /// INPUT PROCESSING
         processInput(window.GetGLFWWindow());
         window.OnUpdate();
         calculateDeltaTime();

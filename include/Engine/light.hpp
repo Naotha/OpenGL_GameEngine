@@ -6,6 +6,13 @@
 #include <string>
 #include <iostream>
 
+enum LIGHT_TYPE
+{
+    POINT_LIGHT,
+    SPOT_LIGHT,
+    DIRECTIONAL_LIGHT
+};
+
 class Light
 {
 public:

@@ -3,6 +3,7 @@
 #include "EventHandler/EventHandler.h"
 
 Application::Application(Window& window) : window(window) {
+    renderer = Renderer::GetInstance();
     Init();
 };
 

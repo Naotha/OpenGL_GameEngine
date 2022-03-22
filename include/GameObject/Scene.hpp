@@ -28,6 +28,12 @@ public:
         }
     }
 
+    GameObject* CreateGameObject()
+    {
+        _gameObjects.push_back(new GameObject());
+        return _gameObjects.back();
+    }
+
 private:
     std::vector<GameObject*> _gameObjects;
 };
