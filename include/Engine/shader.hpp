@@ -29,6 +29,11 @@ public:
     void setUniformMat4(const char* name, const glm::mat4& value);
     // Getters
     unsigned int getID() const;
+
+    bool operator == (const Shader& other) const
+    {
+        return this->_ID == other._ID;
+    }
 private:
     // The ShaderProgram ID
     unsigned int _ID;

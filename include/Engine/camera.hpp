@@ -29,6 +29,7 @@ public:
     float fov;
 
     Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch, float movementSpeed, float mouseSensitivity, float fov);
+    Camera() = default;
 
     void processKeyboard(CameraMovement direction, float deltaTime);
     void processMouseMovement(float xOffset, float yOffset);

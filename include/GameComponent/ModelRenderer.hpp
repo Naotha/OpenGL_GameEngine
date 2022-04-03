@@ -7,14 +7,21 @@
 
 class ModelRenderer : public GameComponent{
 public:
-    ModelRenderer(Model* model, Shader& shader) : model(model), shader(shader) {};
+    ModelRenderer(Model* model, Shader& shader) : model(model), shader(shader)
+    {
+        enabled = true;
+        Renderer::GetInstance()->AddShader(&this->shader);
+    };
 
     void Render(Transform transform) override
     {
-        model->draw(shader, transform.GetModelMatrix());
-        shader.bind();
-        shader.setUniformFloat("u_material.shininess", 32.0f);
-        shader.unbind();
+        if (enabled)
+        {
+            model->draw(shader, transform.GetModelMatrix());
+            shader.bind();
+            shader.setUniformFloat("u_material.shininess", 32.0f);
+            shader.unbind();
+        }
     }
 
 private:

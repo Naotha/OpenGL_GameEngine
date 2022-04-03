@@ -7,11 +7,6 @@ class Scene{
 public:
     Scene() : _gameObjects() {};
 
-    void AddGameObject(GameObject* gameObject)
-    {
-        _gameObjects.push_back(gameObject);
-    }
-
     void Update()
     {
         for (auto gameObject : _gameObjects)

@@ -38,11 +38,6 @@ public:
         {
             component->Update(transform);
         }
-
-//        for (auto child : _children)
-//        {
-//            child->Update();
-//        }
     }
 
     void Render()
@@ -51,11 +46,6 @@ public:
         {
             component->Render(transform);
         }
-
-//        for (auto child : _children)
-//        {
-//            child->Render();
-//        }
     }
 
     void SetPosition(glm::vec3 newPosition)

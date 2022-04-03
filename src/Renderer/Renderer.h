@@ -12,9 +12,9 @@ public:
     static Renderer* GetInstance();
     void SetViewportSize(glm::vec2& viewportSize);
 
-    void Init(Camera& camera, glm::vec2& viewPortSize);
-    void PreRender(Camera& camera, Shader& shader);
-    void Render(Scene& scene);
+    void Init(Camera* mainCamera, Scene* mainScene, glm::vec2& viewPortSize);
+    void PreRender();
+    void Render();
     void PostRender();
 
     void DrawToWindow(Window& window);
@@ -23,8 +23,36 @@ public:
     glm::mat4& GetView() { return view; }
     glm::mat4& GetProjection() { return projection; }
 
+    void AddPointLight() { pointLightCount++; }
+    void AddSpotLight() { spotLightCount++; }
+
+    int GetPointLightCount() { return pointLightCount; }
+    int GetSpotLightCount() { return spotLightCount; }
+
+    void AddShader(Shader* shader)
+    {
+        int i = 0;
+        while (i < activeShaders.size() && activeShaders[i]->getID() != shader->getID()){
+            i++;
+        }
+
+        if (i >= activeShaders.size())
+        {
+            activeShaders.push_back(shader);
+        }
+    }
+
+    float GetDeltaTime() { return deltaTime; }
+
 private:
     Renderer();
+
+    void calculateDeltaTime()
+    {
+        float currentFrame = glfwGetTime();
+        deltaTime = currentFrame - lastFrameTime;
+        lastFrameTime = currentFrame;
+    }
 
     static Renderer* instance;
     glm::vec2 viewportSize;
@@ -32,6 +60,16 @@ private:
 
     glm::mat4 view;
     glm::mat4 projection;
+    int pointLightCount = 0;
+    int spotLightCount = 0;
+
+    Camera* mainCamera;
+    Scene* mainScene;
+
+    std::vector<Shader*> activeShaders;
+
+    float deltaTime = 0.0f;
+    float lastFrameTime = 0.0f;
 };
 
 Renderer* Renderer::instance = nullptr;
@@ -39,21 +77,23 @@ Renderer* Renderer::instance = nullptr;
 Renderer* Renderer::GetInstance() {
     if (instance == nullptr)
     {
-        instance = new Renderer;
+        instance = new Renderer();
     }
     return instance;
 }
 
-void Renderer::Init(Camera& camera, glm::vec2& viewportSize)
+void Renderer::Init(Camera* mainCamera, Scene* mainScene, glm::vec2& viewportSize)
 {
+    this->mainCamera = mainCamera;
+    this->mainScene = mainScene;
     this->viewportSize = viewportSize;
-    projection = glm::perspective(glm::radians(camera.fov),
+    projection = glm::perspective(glm::radians(mainCamera->fov),
                                   viewportSize.x / viewportSize.y,
                                   0.1f, 100.0f);
-    view = camera.getViewMatrix();
+    view = mainCamera->getViewMatrix();
 }
 
-void Renderer::PreRender(Camera& camera, Shader& shader) {
+void Renderer::PreRender() {
     mainFBO.bind();
     glViewport(0, 0, viewportSize.x, viewportSize.y);
 
@@ -61,26 +101,34 @@ void Renderer::PreRender(Camera& camera, Shader& shader) {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     /* Camera Calculations */
-    projection = glm::perspective(glm::radians(camera.fov),
+    projection = glm::perspective(glm::radians(mainCamera->fov),
                                   viewportSize.x / viewportSize.y,
                                   0.1f, 100.0f);
-    view = camera.getViewMatrix();
+    view = mainCamera->getViewMatrix();
     glm::mat4 vp;
-    shader.bind();
     vp = projection * view;
-    shader.setUniformMat4("u_vp", vp);
-    shader.setUniformFloat3("u_viewPos", camera.position);
-    shader.unbind();
+
+    for (Shader* shader : activeShaders)
+    {
+        shader->bind();
+        shader->setUniformMat4("u_vp", vp);
+        shader->setUniformFloat3("u_viewPos", mainCamera->position);
+        shader->setUniformInt("u_pointLightsNum", pointLightCount);
+        shader->setUniformInt("u_spotLightsNum", spotLightCount);
+        shader->unbind();
+    }
 }
 
-void Renderer::Render(Scene& scene) {
-    scene.Update();
-    scene.Render();
+void Renderer::Render()
+{
+    mainScene->Update();
+    mainScene->Render();
 }
 
 void Renderer::PostRender() {
     mainFBO.unbind();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    calculateDeltaTime();
 }
 
 void Renderer::DrawToWindow(Window& window) {

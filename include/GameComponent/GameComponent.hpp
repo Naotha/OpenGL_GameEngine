@@ -7,6 +7,13 @@ class GameComponent{
 public:
     virtual void Update(Transform transform) {};
     virtual void Render(Transform transform) {};
+
+    virtual void Enable() { enabled = true; };
+    virtual void Disable() { enabled = false; };
+    virtual bool IsEnabled() {return true;};
+
+protected:
+    bool enabled;
 };
 
 #endif //OPENGL_GAMEENGINE_GAMECOMPONENT_HPP

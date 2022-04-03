@@ -20,6 +20,10 @@ public:
     void setDiffuse(glm::vec3 diffuse) { _diffuse = diffuse; }
     void setSpecular(glm::vec3 specular) { _specular = specular; }
 
+    glm::vec3 getAmbient() { return _ambient; }
+    glm::vec3 getDiffuse() { return _diffuse; }
+    glm::vec3 getSpecular() { return _specular; }
+
     virtual void setLightInShader(std::string uniformLightName, Shader& shader) = 0;
 protected:
     glm::vec3 _ambient;

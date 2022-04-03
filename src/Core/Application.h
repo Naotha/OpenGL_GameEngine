@@ -9,7 +9,10 @@ public:
     Application(Window& window);
 
     void Run();
+    virtual void PreLoop() {};
     virtual void OnLoop() = 0;
+    virtual void OnRender();
+    virtual void PostLoop() {};
     virtual void Setup() = 0;
 
 protected:
@@ -32,11 +35,23 @@ void Application::Init() {
     EventHandler::Init();
 }
 
+void Application::OnRender() {
+    renderer->Render();
+    renderer->PostRender();
+}
+
 void Application::Run() {
     Setup();
     while (window.IsAlive())
     {
+        PreLoop();
+
         OnLoop();
+        OnRender();
+
+        PostLoop();
+
+        window.OnUpdate();
     }
     window.Shutdown();
 }

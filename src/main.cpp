@@ -39,6 +39,7 @@
 #include "GameObject/GameObject.hpp"
 #include "GameComponent/GameComponent.hpp"
 #include "GameComponent/ModelRenderer.hpp"
+#include "GameComponent/LightRenderer.hpp"
 
 class MyApplication : public Application{
 public:
@@ -46,25 +47,13 @@ public:
     float lastY;
     bool firstMouse;
     bool cameraMode;
-    float deltaTime;
-    float lastFrame;
     Camera camera;
+
     bool spotLightOn;
+    SpotLightRenderer* spotLightRenderer;
 
-    Shader shader;
-    Model* testModel;
-    ModelRenderer* modelRenderer;
     Scene scene;
-    GameObject* parentShiba;
-    GameObject* childShiba;
-
-    glm::vec3 lightPos;
-    glm::vec3 lightCol;
-    glm::vec3 ambientCol;
-    glm::vec3 diffuseCol;
-    DirectionalLight dirLight;
-    SpotLight spotLight;
-
+    Shader shader;
     FBO sceneFBO;
 
     bool guiOn = true;
@@ -86,8 +75,6 @@ public:
         lastY = (float)window.GetHeight() / 2;
         firstMouse = true;
         cameraMode = false;
-        deltaTime = 0.0f;
-        lastFrame = 0.0f;
         spotLightOn = false;
         sceneFBO = renderer->GetFBO();
         sceneFBO.resize(window.GetWidth(), window.GetHeight());
@@ -111,6 +98,7 @@ public:
 
         if (cameraMode)
         {
+            float deltaTime = renderer->GetDeltaTime();
             if (glfwGetKey(glfwWindow, GLFW_KEY_W) == GLFW_PRESS)
                 camera.processKeyboard(FORWARD, deltaTime);
             if (glfwGetKey(glfwWindow, GLFW_KEY_S) == GLFW_PRESS)
@@ -164,6 +152,14 @@ public:
         if (key == GLFW_KEY_E && action == GLFW_PRESS)
         {
             spotLightOn = !spotLightOn;
+            if (spotLightOn)
+            {
+                spotLightRenderer->Enable();
+            }
+            else
+            {
+                spotLightRenderer->Disable();
+            }
         }
     }
 
@@ -187,13 +183,6 @@ public:
         camera.processMouseScroll(yOffset);
     }
 
-    void calculateDeltaTime()
-    {
-        float currentFrame = glfwGetTime();
-        deltaTime = currentFrame - lastFrame;
-        lastFrame = currentFrame;
-    }
-
     void RegisterEvents()
     {
         frameBufferSizeEvent = new FrameBufferSizeEvent(this, &MyApplication::framebuffer_size_callback);
@@ -215,41 +204,37 @@ public:
     {
         RegisterEvents();
 
-        testModel = ModelLoader::LoadModel("./resources/models/shiba/scene.gltf");
-        modelRenderer = new ModelRenderer(testModel, shader);
+        /// Lights
+        glm::vec3 lightPos = glm::vec3(1.0f, 1.0f, 1.0f);
+        glm::vec3 lightCol = glm::vec3 (1.0f, 1.0f, 1.0f);
+        glm::vec3 ambientCol = lightCol * 0.2f;
+        glm::vec3 diffuseCol = lightCol * 0.8f;
+        DirectionalLight dirLight = DirectionalLight(-lightPos, ambientCol, diffuseCol, lightCol);
+        SpotLight spotLight = SpotLight(camera.position, camera.getFront(), glm::cos(glm::radians(12.5f)), glm::cos(glm::radians(17.5f)), CONST_ATTENUATION, ambientCol, diffuseCol, lightCol);
 
-        parentShiba = scene.CreateGameObject();
-        childShiba = scene.CreateGameObject();
+        /// GameObjects
+        Model* testModel = ModelLoader::LoadModel("./resources/models/shiba/scene.gltf");
+        ModelRenderer* modelRenderer = new ModelRenderer(testModel, shader);
+
+        GameObject* parentShiba = scene.CreateGameObject();
+        GameObject* childShiba = scene.CreateGameObject();
         childShiba->SetPosition(glm::vec3(1.0f, 0.0f, 0.0f));
         childShiba->SetScale(glm::vec3(0.5f, 0.5f, 0.5f));
-
         parentShiba->AddComponent(modelRenderer);
         childShiba->AddComponent(modelRenderer);
-
         parentShiba->AddChild(childShiba);
 
-        /* Light */
-        shader.bind();
-        shader.setUniformFloat("u_material.shininess", 32.0f);
-        shader.unbind();
+        GameObject* directionalLight = scene.CreateGameObject();
+        GameObject* spotLightObject = scene.CreateGameObject();
+        DirectionalLightRenderer* dirLightRenderer = new DirectionalLightRenderer(dirLight, shader);
+        spotLightRenderer = new SpotLightRenderer(spotLight, shader);
+        directionalLight->AddComponent(dirLightRenderer);
+        spotLightObject->AddComponent(spotLightRenderer);
+        spotLightRenderer->Disable();
 
-        // Light Types
-        lightPos = glm::vec3(1.0f, 1.0f, 1.0f);
-        lightCol = glm::vec3 (1.0f, 1.0f, 1.0f);
-        ambientCol = lightCol * 0.2f;
-        diffuseCol = lightCol * 0.8f;
-        dirLight = DirectionalLight(-lightPos, ambientCol, diffuseCol, lightCol);
-        dirLight.setLightInShader("u_dirLight", shader);
-
-        spotLight = SpotLight(camera.position, camera.getFront(), glm::cos(glm::radians(12.5f)), glm::cos(glm::radians(17.5f)), CONST_ATTENUATION, ambientCol, diffuseCol, lightCol);
-        spotLight.setLightInShader("u_spotLights[0]", shader);
-        shader.bind();
-        shader.setUniformInt("u_spotLightsNum", 1);
-        shader.unbind();
-
-        // Framebuffer
+        // Renderer
         glm::vec2 viewPortSize = glm::vec2(window.GetWidth(), window.GetHeight());
-        renderer->Init(camera, viewPortSize);
+        renderer->Init(&camera, &scene, viewPortSize);
 
         /// SETUP IMGUI
         editorGui = new EditorGui(window);
@@ -259,9 +244,9 @@ public:
         editorGui->AddWidget(parametersWindow);
     }
 
-    void OnLoop() override
+    void PreLoop() override
     {
-        /// PRE-RENDER
+        /// PRE RENDER
         if (guiOn)
         {
             glm::vec2 viewport = glm::vec2(sceneWindow->GetSize().x, sceneWindow->GetSize().y);
@@ -273,34 +258,22 @@ public:
             glm::vec2 viewport = glm::vec2(window.GetWidth(), window.GetHeight());
             renderer->SetViewportSize(viewport);
         }
-        renderer->PreRender(camera, shader);
+        renderer->PreRender();
+    }
 
-        /// RENDER
-        renderer->Render(scene);
-
-        shader.bind();
-        spotLight.setPosition(camera.position);
-        spotLight.setDirection(camera.getFront());
-        spotLight.setLightInShader("u_spotLights[0]", shader);
-        shader.unbind();
-
+    void OnLoop() override
+    {
+        /// LOGIC
         if (spotLightOn)
         {
-            shader.bind();
-            shader.setUniformInt("u_spotLightsNum", 1);
-            shader.unbind();
+            spotLightRenderer->GetSpotLight().setPosition(camera.position);
+            spotLightRenderer->GetSpotLight().setDirection(camera.getFront());
         }
-        else
-        {
-            shader.bind();
-            shader.setUniformInt("u_spotLightsNum", 0);
-            shader.unbind();
+    };
 
-        }
-
-        /// POST-RENDER
-        renderer->PostRender();
-
+    void PostLoop() override
+    {
+        /// POST RENDER
         if (guiOn)
         {
             editorGui->Begin();
@@ -312,11 +285,8 @@ public:
             renderer->DrawToWindow(window);
         }
 
-        /// INPUT PROCESSING
         processInput(window.GetGLFWWindow());
-        window.OnUpdate();
-        calculateDeltaTime();
-    };
+    }
 };
 
 int main()
