@@ -2,23 +2,23 @@
 #include <iostream>
 
 void EventHandler::SetFrameBufferSizeCallback(FrameBufferSizeEventCall* event) {
-    _frameBufferSizeCallbacks.push_back(event);
+    _frameBufferSizeCallbacks.insert(event);
 }
 
 void EventHandler::SetCursorPosCallback(CursorPosEventCall* event) {
-    _cursorPosCallbacks.push_back(event);
+    _cursorPosCallbacks.insert(event);
 }
 
 void EventHandler::SetMouseButtonCallback(MouseButtonEventCall* event) {
-    _mouseButtonCallbacks.push_back(event);
+    _mouseButtonCallbacks.insert(event);
 }
 
 void EventHandler::SetMouseScrollCallback(MouseScrollEventCall* event) {
-    _mouseScrollCallbacks.push_back(event);
+    _mouseScrollCallbacks.insert(event);
 }
 
 void EventHandler::SetKeyCallback(KeyEventCall* event) {
-    _keyCallbacks.push_back(event);
+    _keyCallbacks.insert(event);
 }
 
 void EventHandler::FrameBufferSizeCallback(GLFWwindow* glfwWindow, int width, int height) {

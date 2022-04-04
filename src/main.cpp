@@ -185,19 +185,12 @@ public:
 
     void RegisterEvents()
     {
-        frameBufferSizeEvent = new FrameBufferSizeEvent(this, &MyApplication::framebuffer_size_callback);
-        cursorPosEvent = new CursorPosEvent(this, &MyApplication::mouse_callback);
-        mouseButtonEvent = new MouseButtonEvent(this, &MyApplication::mouse_button_callback);
-        mouseScrollEvent = new MouseScrollEvent(this, &MyApplication::scroll_callback);
-        keyEvent = new KeyEvent(this, &MyApplication::key_callback);
-        guiKeyEvent = new KeyEvent(this, &MyApplication::gui_key_callback);
-
-        EventHandler::SetFrameBufferSizeCallback(frameBufferSizeEvent);
-        EventHandler::SetCursorPosCallback(cursorPosEvent);
-        EventHandler::SetMouseButtonCallback(mouseButtonEvent);
-        EventHandler::SetMouseScrollCallback(mouseScrollEvent);
-        EventHandler::SetKeyCallback(keyEvent);
-        EventHandler::SetKeyCallback(guiKeyEvent);
+        EventHandler::SetFrameBufferSizeCallback(this, &MyApplication::framebuffer_size_callback);
+        EventHandler::SetCursorPosCallback(this, &MyApplication::mouse_callback);
+        EventHandler::SetMouseButtonCallback(this, &MyApplication::mouse_button_callback);
+        EventHandler::SetMouseScrollCallback(this, &MyApplication::scroll_callback);
+        EventHandler::SetKeyCallback(this, &MyApplication::key_callback);
+        EventHandler::SetKeyCallback(this, &MyApplication::gui_key_callback);
     }
 
     void Setup() override

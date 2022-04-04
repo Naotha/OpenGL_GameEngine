@@ -37,6 +37,7 @@ target_include_directories(${PROJECT_NAME}
         PUBLIC vendor/assimp/include
         PUBLIC vendor/json/include
         PUBLIC vendor/imgui
+        PUBLIC vendor/colony
         PUBLIC vendor
         PUBLIC include
         PUBLIC src

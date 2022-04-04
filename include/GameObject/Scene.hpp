@@ -1,6 +1,7 @@
 #ifndef OPENGL_GAMEENGINE_SCENE_HPP
 #define OPENGL_GAMEENGINE_SCENE_HPP
 
+#include <colony/plf_colony.h>
 #include "GameObject.hpp"
 
 class Scene{
@@ -25,12 +26,13 @@ public:
 
     GameObject* CreateGameObject()
     {
-        _gameObjects.push_back(new GameObject());
-        return _gameObjects.back();
+        auto gameObject = new GameObject();
+        _gameObjects.insert(gameObject);
+        return gameObject;
     }
 
 private:
-    std::vector<GameObject*> _gameObjects;
+    plf::colony<GameObject*> _gameObjects;
 };
 
 #endif //OPENGL_GAMEENGINE_SCENE_HPP

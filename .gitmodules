@@ -19,3 +19,6 @@
 [submodule "vendor/imgui_filebrowser"]
 	path = vendor/imgui_filebrowser
 	url = https://github.com/AirGuanZ/imgui-filebrowser.git
+[submodule "vendor/colony"]
+	path = vendor/colony
+	url = https://github.com/mattreecebentley/plf_colony.git

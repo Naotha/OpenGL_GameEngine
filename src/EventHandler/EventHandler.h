@@ -6,6 +6,7 @@
 #include <GLFW/glfw3.h>
 #include "Window/Window.h"
 #include <iostream>
+#include <colony/plf_colony.h>
 
 class FrameBufferSizeEventCall
 {
@@ -110,10 +111,44 @@ public:
 class EventHandler {
 public:
     static void SetFrameBufferSizeCallback(FrameBufferSizeEventCall* event);
+
+    template<class O>
+    static void SetFrameBufferSizeCallback(O* object, void (O::*function)(GLFWwindow* glfwWindow, int width, int height))
+    {
+        _frameBufferSizeCallbacks.insert(new FrameBufferSizeEvent(object, function));
+    }
+
     static void SetCursorPosCallback(CursorPosEventCall* event);
+
+    template<class O>
+    static void SetCursorPosCallback(O* object, void (O::*function)(GLFWwindow* glfwWindow, double xpos, double ypos))
+    {
+        _cursorPosCallbacks.insert(new CursorPosEvent(object, function));
+    }
+
     static void SetMouseButtonCallback(MouseButtonEventCall* event);
+
+    template<class O>
+    static void SetMouseButtonCallback(O* object, void (O::*function)(GLFWwindow* glfwWindow, int button, int action, int mods))
+    {
+        _mouseButtonCallbacks.insert(new MouseButtonEvent(object, function));
+    }
+
     static void SetMouseScrollCallback(MouseScrollEventCall* event);
+
+    template<class O>
+    static void SetMouseScrollCallback(O* object, void (O::*function)(GLFWwindow* glfwWindow, double xOffset, double yOffset))
+    {
+        _mouseScrollCallbacks.insert(new MouseScrollEvent(object, function));
+    }
+    
     static void SetKeyCallback(KeyEventCall* event);
+
+    template<class O>
+    static void SetKeyCallback(O* object, void (O::*function)(GLFWwindow* glfwWindow, int key, int scancode, int action, int mods))
+    {
+        _keyCallbacks.insert(new KeyEvent(object, function));
+    }
 
     static void Init();
 
@@ -126,11 +161,11 @@ private:
     static void MouseScrollCallback(GLFWwindow* glfwWindow, double xOffset, double yOffset);
     static void KeyCallback(GLFWwindow* glfwWindow, int key, int scancode, int action, int mods);
 
-    inline static std::vector<FrameBufferSizeEventCall*> _frameBufferSizeCallbacks;
-    inline static std::vector<CursorPosEventCall*> _cursorPosCallbacks;
-    inline static std::vector<MouseButtonEventCall*> _mouseButtonCallbacks;
-    inline static std::vector<MouseScrollEventCall*> _mouseScrollCallbacks;
-    inline static std::vector<KeyEventCall*> _keyCallbacks;
+    inline static plf::colony<FrameBufferSizeEventCall*> _frameBufferSizeCallbacks;
+    inline static plf::colony<CursorPosEventCall*> _cursorPosCallbacks;
+    inline static plf::colony<MouseButtonEventCall*> _mouseButtonCallbacks;
+    inline static plf::colony<MouseScrollEventCall*> _mouseScrollCallbacks;
+    inline static plf::colony<KeyEventCall*> _keyCallbacks;
 };
 
 
