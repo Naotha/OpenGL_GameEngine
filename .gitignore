@@ -1,7 +1,8 @@
 .idea
-imgui.ini
+.vs
 [Bb][Uu][Ii][Ll][Dd]
-build_debug
+out
+CMakeSettings.json
 
 # Prerequisites
 *.d
