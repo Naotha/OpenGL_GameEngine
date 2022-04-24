@@ -89,7 +89,7 @@ void Renderer::Init(Camera* mainCamera, Scene* mainScene, glm::vec2& viewportSiz
     this->viewportSize = viewportSize;
     projection = glm::perspective(glm::radians(mainCamera->fov),
                                   viewportSize.x / viewportSize.y,
-                                  0.1f, 100.0f);
+                                  0.1f, 1000.0f);
     view = mainCamera->getViewMatrix();
 }
 
@@ -103,7 +103,7 @@ void Renderer::PreRender() {
     /* Camera Calculations */
     projection = glm::perspective(glm::radians(mainCamera->fov),
                                   viewportSize.x / viewportSize.y,
-                                  0.1f, 100.0f);
+                                  0.1f, 1000.0f);
     view = mainCamera->getViewMatrix();
     glm::mat4 vp;
     vp = projection * view;

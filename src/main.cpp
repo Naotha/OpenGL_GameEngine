@@ -206,17 +206,48 @@ public:
         SpotLight spotLight = SpotLight(camera.position, camera.getFront(), glm::cos(glm::radians(12.5f)), glm::cos(glm::radians(17.5f)), CONST_ATTENUATION, ambientCol, diffuseCol, lightCol);
 
         /// GameObjects
+        GameObject* parentShiba = scene.CreateGameObject();
         Model* testModel = ModelLoader::LoadModel("./resources/models/shiba/scene.gltf");
         ModelRenderer* modelRenderer = new ModelRenderer(testModel, shader);
-
-        GameObject* parentShiba = scene.CreateGameObject();
+        parentShiba->AddComponent(modelRenderer);
         GameObject* childShiba = scene.CreateGameObject();
         childShiba->SetPosition(glm::vec3(1.0f, 0.0f, 0.0f));
         childShiba->SetScale(glm::vec3(0.5f, 0.5f, 0.5f));
-        parentShiba->AddComponent(modelRenderer);
         childShiba->AddComponent(modelRenderer);
         parentShiba->AddChild(childShiba);
 
+        GameObject* baseTerrain = scene.CreateGameObject();
+        Model* baseTerrainModel = ModelLoader::LoadModel("./resources/models/base_terrain/base_terrain.obj");
+        ModelRenderer* baseTerrainModelRenderer = new ModelRenderer(baseTerrainModel, shader);
+        baseTerrain->AddComponent(baseTerrainModelRenderer);
+        baseTerrain->SetPosition(glm::vec3(0.0f, -1.0f, 0.0f));
+        
+        std::vector<glm::vec3> treePositions = {
+            glm::vec3(7.0f, -1.0f,  20.0f),
+            glm::vec3(23.0f, -1.0f, -40.0f),
+            glm::vec3(-40.0f, -1.0f, -50.0f),
+            glm::vec3(0.0f, -1.0f, 30.0f),
+            glm::vec3(-7.0f, -1.0f,  -20.0f),
+            glm::vec3(-23.0f, -1.0f, 40.0f),
+            glm::vec3(40.0f, -1.0f, 50.0f),
+            glm::vec3(20.0f,  -1.0f, 7.0f),
+            glm::vec3(-40.0f,  -1.0f, 23.0f),
+            glm::vec3(-50.0f,  -1.0f, -40.0f),
+            glm::vec3(30.0f,  -1.0f, 0.0f),
+            glm::vec3(-20.0f,  -1.0f, -7.0f),
+            glm::vec3(40.0f,  -1.0f, - 23.0f),
+            glm::vec3(50.0f,  -1.0f, 40.0f),
+        };
+
+        Model* treeModel = ModelLoader::LoadModel("./resources/models/tree/tree.obj");
+        ModelRenderer* treeModelRenderer = new ModelRenderer(treeModel, shader);
+        for (auto& position : treePositions)
+        {
+            GameObject* tree = scene.CreateGameObject();
+            tree->AddComponent(treeModelRenderer);
+            tree->SetPosition(position);
+        }
+        
         GameObject* directionalLight = scene.CreateGameObject();
         GameObject* spotLightObject = scene.CreateGameObject();
         DirectionalLightRenderer* dirLightRenderer = new DirectionalLightRenderer(dirLight, shader);
