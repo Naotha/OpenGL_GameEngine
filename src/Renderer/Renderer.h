@@ -3,6 +3,8 @@
 
 #include "GameObject/Scene.hpp"
 #include "Engine/FBO.hpp"
+#include "Engine/GBuffer.hpp"
+#include "Engine/ShadowMap.hpp"
 #include "Engine/camera.hpp"
 #include "Engine/shader.hpp"
 #include "Window/Window.h"
@@ -20,8 +22,10 @@ public:
     void DrawToWindow(Window& window);
 
     FBO& GetFBO() { return mainFBO; }
+    GBuffer& GetGBuffer() { return gBuffer; }
     glm::mat4& GetView() { return view; }
     glm::mat4& GetProjection() { return projection; }
+    float GetDeltaTime() { return deltaTime; }
 
     void AddPointLight() { pointLightCount++; }
     void AddSpotLight() { spotLightCount++; }
@@ -42,8 +46,6 @@ public:
         }
     }
 
-    float GetDeltaTime() { return deltaTime; }
-
 private:
     Renderer();
 
@@ -54,9 +56,39 @@ private:
         lastFrameTime = currentFrame;
     }
 
+    void InitGBufferQuad()
+    {
+        gBufferQuadVAO.bind();
+        gBufferQuadVBO.SetData(gBufferQuadVertices);
+        gBufferQuadVAO.linkAttribPointer(gBufferQuadVBO, 0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
+        gBufferQuadVAO.linkAttribPointer(gBufferQuadVBO, 1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
+        gBufferQuadVAO.linkAttribPointer(gBufferQuadVBO, 2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, texCoord));
+        gBufferQuadVAO.unbind();
+    }
+
+    void RenderGBufferQuad(Shader shader)
+    {
+        shader.bind();
+        gBufferQuadVAO.bind();
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        gBufferQuadVAO.unbind();
+        shader.unbind();
+    }
+
     static Renderer* instance;
     glm::vec2 viewportSize;
     FBO mainFBO;
+    GBuffer gBuffer;
+    VAO gBufferQuadVAO;
+    VBO gBufferQuadVBO;
+    std::vector<Vertex> gBufferQuadVertices = {
+            {{-1.0f,  1.0f, 0.0f}, {0.0f,  0.0f, 0.0f}, {0.0f, 1.0f}},
+            {{-1.0f, -1.0f, 0.0f}, {0.0f,  0.0f, 0.0f}, {0.0f, 0.0f}},
+            {{1.0f,  1.0f, 0.0f}, {0.0f,  0.0f, 0.0f}, {1.0f, 1.0f}},
+            {{1.0f, -1.0f, 0.0f}, {0.0f,  0.0f, 0.0f}, {1.0f, 0.0f}}
+    };
+
+    ShadowMap shadowMap;
 
     glm::mat4 view;
     glm::mat4 projection;
@@ -66,10 +98,17 @@ private:
     Camera* mainCamera;
     Scene* mainScene;
 
+    Shader defaultGeometryPassShader;
+    Shader defaultLightingPassShader;
+    Shader shadowShader;
+    Shader shadowTest;
     std::vector<Shader*> activeShaders;
 
     float deltaTime = 0.0f;
     float lastFrameTime = 0.0f;
+
+    bool deferredRendering = false;
+    bool shadowRendering = true;
 };
 
 Renderer* Renderer::instance = nullptr;
@@ -90,23 +129,45 @@ void Renderer::Init(Camera* mainCamera, Scene* mainScene, glm::vec2& viewportSiz
     projection = glm::perspective(glm::radians(mainCamera->fov),
                                   viewportSize.x / viewportSize.y,
                                   0.1f, 1000.0f);
+    mainFBO.resize(viewportSize.x, viewportSize.y);
+    gBuffer.resize(viewportSize.x, viewportSize.y);
     view = mainCamera->getViewMatrix();
+    InitGBufferQuad();
 }
 
 void Renderer::PreRender() {
-    mainFBO.bind();
-    glViewport(0, 0, viewportSize.x, viewportSize.y);
-
-    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
     /* Camera Calculations */
     projection = glm::perspective(glm::radians(mainCamera->fov),
                                   viewportSize.x / viewportSize.y,
                                   0.1f, 1000.0f);
     view = mainCamera->getViewMatrix();
-    glm::mat4 vp;
-    vp = projection * view;
+    glm::mat4 vp = projection * view;
+
+    if (deferredRendering)
+    {
+        gBuffer.bind();
+        glViewport(0, 0, viewportSize.x, viewportSize.y);
+
+        defaultGeometryPassShader.setUniformMat4("u_vp", vp);
+        defaultLightingPassShader.setUniformFloat3("u_viewPos", mainCamera->position);
+        defaultLightingPassShader.setUniformInt("u_pointLightsNum", pointLightCount);
+        defaultLightingPassShader.setUniformInt("u_spotLightsNum", spotLightCount);
+    }
+    else if (shadowRendering)
+    {
+        shadowMap.bind();
+        glViewport(0, 0, shadowMap.GetSize().x, shadowMap.GetSize().y);
+        glClear(GL_DEPTH_BUFFER_BIT);
+        shadowMap.SetShadowUniforms(defaultLightingPassShader);
+    }
+    else
+    {
+        mainFBO.bind();
+        glViewport(0, 0, viewportSize.x, viewportSize.y);
+
+        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    }
 
     for (Shader* shader : activeShaders)
     {
@@ -122,12 +183,43 @@ void Renderer::PreRender() {
 void Renderer::Render()
 {
     mainScene->Update();
-    mainScene->Render();
+
+    if (deferredRendering)
+    {
+        gBuffer.bind();
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        mainScene->RenderWithShader(defaultGeometryPassShader);
+        gBuffer.unbind();
+
+        mainFBO.bind();
+        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        gBuffer.BindTextures(defaultLightingPassShader);
+        mainScene->RenderLightsOnly(defaultLightingPassShader);
+
+        RenderGBufferQuad(defaultLightingPassShader);
+    }
+    else
+    {
+        if (shadowRendering)
+        {
+            mainScene->RenderWithShader(shadowShader);
+            shadowMap.unbind();
+
+            mainFBO.bind();
+            glViewport(0, 0, viewportSize.x, viewportSize.y);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            shadowMap.SetShadowMapInShader(shadowTest);
+            RenderGBufferQuad(shadowTest);
+        }
+        mainFBO.bind();
+        mainScene->Render();
+    }
 }
 
 void Renderer::PostRender() {
-    mainFBO.unbind();
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    //mainFBO.unbind();
     calculateDeltaTime();
 }
 
@@ -142,6 +234,13 @@ void Renderer::SetViewportSize(glm::vec2& viewportSize) {
     this->viewportSize = viewportSize;
 }
 
-Renderer::Renderer() : mainFBO(1280, 720){};
+Renderer::Renderer() : mainFBO(1280, 720), gBufferQuadVBO(gBufferQuadVertices),
+defaultGeometryPassShader("./resources/shaders/geometryPassDeferred.vert", "./resources/shaders/geometryPassDeferred.frag"),
+defaultLightingPassShader("./resources/shaders/lightingPassDeferred.vert", "./resources/shaders/lightingPassDeferred.frag"),
+shadowShader("./resources/shaders/shadow.vert", "./resources/shaders/shadow.frag"),
+shadowTest("./resources/shaders/lightingPassDeferred.vert", "./resources/shaders/shadowTest.frag")
+{
+    InitGBufferQuad();
+};
 
 #endif //OPENGL_GAMEENGINE_RENDERER_H

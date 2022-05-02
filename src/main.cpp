@@ -56,7 +56,7 @@ public:
     Shader shader;
     FBO sceneFBO;
 
-    bool guiOn = true;
+    bool guiOn = false;
     EditorGui* editorGui;
     SceneWidget* sceneWindow;
     ParametersWidget* parametersWindow;
@@ -67,6 +67,8 @@ public:
     MouseScrollEventCall* mouseScrollEvent;
     KeyEventCall* keyEvent;
     KeyEventCall* guiKeyEvent;
+
+    std::vector<GameObject*> shibas;
 
     MyApplication(Window& window) : Application(window), camera(glm::vec3(0.0f, 0.0f, 3.0f)),
     shader("./resources/shaders/standardShader.vert", "./resources/shaders/standardShader.frag")
@@ -88,6 +90,7 @@ public:
         if (!guiOn)
         {
             sceneFBO.resize(window.GetWidth(), window.GetHeight());
+            renderer->GetGBuffer().resize(window.GetWidth(), window.GetHeight());
         }
     }
 
@@ -172,6 +175,7 @@ public:
             if (!guiOn)
             {
                 sceneFBO.resize(window.GetWidth(), window.GetHeight());
+                renderer->GetGBuffer().resize(window.GetWidth(), window.GetHeight());
                 std::cout<<window.GetWidth()<<" "<<window.GetHeight()<<std::endl;
                 sceneWindow->Disable();
             }
@@ -206,15 +210,16 @@ public:
         SpotLight spotLight = SpotLight(camera.position, camera.getFront(), glm::cos(glm::radians(12.5f)), glm::cos(glm::radians(17.5f)), CONST_ATTENUATION, ambientCol, diffuseCol, lightCol);
 
         /// GameObjects
-        GameObject* parentShiba = scene.CreateGameObject();
-        Model* testModel = ModelLoader::LoadModel("./resources/models/shiba/scene.gltf");
-        ModelRenderer* modelRenderer = new ModelRenderer(testModel, shader);
-        parentShiba->AddComponent(modelRenderer);
-        GameObject* childShiba = scene.CreateGameObject();
-        childShiba->SetPosition(glm::vec3(1.0f, 0.0f, 0.0f));
-        childShiba->SetScale(glm::vec3(0.5f, 0.5f, 0.5f));
-        childShiba->AddComponent(modelRenderer);
-        parentShiba->AddChild(childShiba);
+        Model* shibaModel = ModelLoader::LoadModel("./resources/models/shiba/scene.gltf");
+        for (int i = 0; i < 30; i++)
+        {
+            GameObject* shiba = scene.CreateGameObject();
+            ModelRenderer* modelRenderer = new ModelRenderer(shibaModel, shader);
+            shiba->AddComponent(modelRenderer);
+            shiba->SetRotation(glm::quat(glm::vec3(0.0f, 0.0f, glm::radians(90.0f))));
+            shiba->SetPosition(glm::vec3( -50.0f + i * 3.0f, 0.0f, 0.0f));
+            shibas.push_back(shiba);
+        }
 
         GameObject* baseTerrain = scene.CreateGameObject();
         Model* baseTerrainModel = ModelLoader::LoadModel("./resources/models/base_terrain/base_terrain.obj");
@@ -256,14 +261,14 @@ public:
         spotLightObject->AddComponent(spotLightRenderer);
         spotLightRenderer->Disable();
 
-        // Renderer
+        /// Renderer
         glm::vec2 viewPortSize = glm::vec2(window.GetWidth(), window.GetHeight());
         renderer->Init(&camera, &scene, viewPortSize);
 
         /// SETUP IMGUI
         editorGui = new EditorGui(window);
-        sceneWindow = new SceneWidget(sceneFBO, parentShiba, renderer->GetView(), renderer->GetProjection());
-        parametersWindow = new ParametersWidget(sceneWindow, parentShiba);
+        sceneWindow = new SceneWidget(sceneFBO, baseTerrain, renderer->GetView(), renderer->GetProjection());
+        parametersWindow = new ParametersWidget(sceneWindow, baseTerrain);
         editorGui->AddWidget(sceneWindow);
         editorGui->AddWidget(parametersWindow);
     }
@@ -282,11 +287,19 @@ public:
             glm::vec2 viewport = glm::vec2(window.GetWidth(), window.GetHeight());
             renderer->SetViewportSize(viewport);
         }
+        processInput(window.GetGLFWWindow());
         renderer->PreRender();
     }
 
     void OnLoop() override
     {
+        for (int i = 0; i < shibas.size(); i++)
+        {
+            glm::mat4 sinTranslation = glm::mat4(1.0f);
+            sinTranslation = glm::translate(sinTranslation, glm::vec3(0.0f, 0.0f, glm::sin(float(glfwGetTime()) - float(i)) * 10.0f));
+            shibas[i]->transform.CalculateModelMatrix(sinTranslation);
+        }
+
         /// LOGIC
         if (spotLightOn)
         {
@@ -309,7 +322,7 @@ public:
             renderer->DrawToWindow(window);
         }
 
-        processInput(window.GetGLFWWindow());
+        //std::cout<<1.0f / renderer->GetDeltaTime()<<std::endl;
     }
 };
 

@@ -1,7 +1,6 @@
 #version 460 core
 
 uniform mat4 u_vp;
-uniform mat4 u_mvp;
 uniform mat4 u_model;
 uniform mat4 u_modelIT;
 

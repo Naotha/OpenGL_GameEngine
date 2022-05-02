@@ -24,6 +24,17 @@ public:
         }
     }
 
+    void RenderWithShader(Transform transform, Shader shader) override
+    {
+        if (enabled)
+        {
+            model->draw(shader, transform.GetModelMatrix());
+            shader.bind();
+            shader.setUniformFloat("u_material.shininess", 32.0f);
+            shader.unbind();
+        }
+    }
+
 private:
     Model* model;
     Shader& shader;

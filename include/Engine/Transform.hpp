@@ -18,6 +18,11 @@ public:
         _isUpdated = false;
     }
 
+    void SetModelMatrix(glm::mat4& modelMatrix)
+    {
+        _modelMatrix = modelMatrix;
+    }
+
     glm::mat4& GetModelMatrix() { return _modelMatrix; }
     glm::vec3 GetLocalPosition() { return _position; }
     glm::quat GetLocalRotation() { return  _rotation; }

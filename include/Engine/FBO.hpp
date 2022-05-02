@@ -3,6 +3,8 @@
 
 #include <glad/glad.h>
 #include <vector>
+#include <iostream>
+#include <glm/glm.hpp>
 
 class FBO
 {
@@ -11,7 +13,7 @@ public:
     unsigned int texture;
     unsigned int depthRenderBuffer;
 
-    FBO() = default;
+    FBO() : FBO(1280, 720) {};
 
     FBO(int width, int height)
     {
@@ -30,7 +32,7 @@ public:
         glBindRenderbuffer(GL_RENDERBUFFER, depthRenderBuffer);
         glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
         glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthRenderBuffer);
-        
+
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glBindTexture(GL_TEXTURE_2D, 0);
         glBindRenderbuffer(GL_RENDERBUFFER, 0);

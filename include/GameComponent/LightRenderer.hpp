@@ -21,6 +21,22 @@ public:
         }
     }
 
+    void RenderWithShader(Transform transform, Shader shader)
+    {
+        if (enabled)
+        {
+            light.setLightInShader("u_dirLight", shader);
+        }
+    }
+
+    void RenderLightsOnly(Transform transform, Shader shader)
+    {
+        if (enabled)
+        {
+            light.setLightInShader("u_dirLight", shader);
+        }
+    }
+
     DirectionalLight& GetLight()
     {
         return light;
@@ -43,6 +59,22 @@ public:
     };
 
     void Render(Transform transform)
+    {
+        if (enabled)
+        {
+            light.setLightInShader("u_pointLights["+ std::to_string(shaderIndex) +"]", shader);
+        }
+    }
+
+    void RenderWithShader(Transform transform, Shader shader)
+    {
+        if (enabled)
+        {
+            light.setLightInShader("u_pointLights["+ std::to_string(shaderIndex) +"]", shader);
+        }
+    }
+
+    void RenderLightsOnly(Transform transform, Shader shader)
     {
         if (enabled)
         {
@@ -74,6 +106,16 @@ public:
     };
 
     void Render(Transform transform)
+    {
+        light.setLightInShader("u_spotLights["+ std::to_string(shaderIndex) +"]", shader);
+    }
+
+    void RenderWithShader(Transform transform, Shader shader)
+    {
+        light.setLightInShader("u_spotLights["+ std::to_string(shaderIndex) +"]", shader);
+    }
+
+    void RenderLightsOnly(Transform transform, Shader shader)
     {
         light.setLightInShader("u_spotLights["+ std::to_string(shaderIndex) +"]", shader);
     }
