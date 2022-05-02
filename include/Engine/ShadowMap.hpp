@@ -33,6 +33,10 @@ public:
         glDrawBuffer(GL_NONE);
         glReadBuffer(GL_NONE);
 
+        auto fboStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+        if (fboStatus != GL_FRAMEBUFFER_COMPLETE)
+            std::cout<< "Shadow map error:" << fboStatus << std::endl;
+
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
@@ -53,14 +57,14 @@ public:
         return size;
     }
 
-    void SetShadowUniforms(Shader shader)
+    void SetShadowUniforms(Shader& shader)
     {
         shader.bind();
         shader.setUniformMat4("u_lightSpaceMatrix", lightSpaceMatrix);
         shader.unbind();
     }
 
-    void SetShadowMapInShader(Shader shader)
+    void SetShadowMapInShader(Shader& shader)
     {
         shader.bind();
         glActiveTexture(GL_TEXTURE0);

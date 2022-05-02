@@ -107,8 +107,8 @@ private:
     float deltaTime = 0.0f;
     float lastFrameTime = 0.0f;
 
-    bool deferredRendering = false;
-    bool shadowRendering = true;
+    bool deferredRendering = true;
+    bool shadowRendering = false;
 };
 
 Renderer* Renderer::instance = nullptr;
@@ -148,7 +148,11 @@ void Renderer::PreRender() {
         gBuffer.bind();
         glViewport(0, 0, viewportSize.x, viewportSize.y);
 
+        glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
         defaultGeometryPassShader.setUniformMat4("u_vp", vp);
+
         defaultLightingPassShader.setUniformFloat3("u_viewPos", mainCamera->position);
         defaultLightingPassShader.setUniformInt("u_pointLightsNum", pointLightCount);
         defaultLightingPassShader.setUniformInt("u_spotLightsNum", spotLightCount);
@@ -186,19 +190,24 @@ void Renderer::Render()
 
     if (deferredRendering)
     {
-        gBuffer.bind();
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        mainFBO.bind();
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         mainScene->RenderWithShader(defaultGeometryPassShader);
-        gBuffer.unbind();
-
-        mainFBO.bind();
-        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        gBuffer.BindTextures(defaultLightingPassShader);
-        mainScene->RenderLightsOnly(defaultLightingPassShader);
-
-        RenderGBufferQuad(defaultLightingPassShader);
+        //RenderGBufferQuad(defaultLightingPassShader);
+        //gBuffer.unbind();
+//        gBuffer.bind();
+//        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+//        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+//        mainScene->RenderWithShader(defaultGeometryPassShader);
+//        gBuffer.unbind();
+//
+//        mainFBO.bind();
+//        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+//        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+//        gBuffer.BindTextures(defaultLightingPassShader);
+//        mainScene->RenderLightsOnly(defaultLightingPassShader);
+//
+//        RenderGBufferQuad(defaultLightingPassShader);
     }
     else
     {

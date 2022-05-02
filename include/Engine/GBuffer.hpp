@@ -56,6 +56,10 @@ public:
         glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
         glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthRenderBuffer);
 
+        auto fboStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+        if (fboStatus != GL_FRAMEBUFFER_COMPLETE)
+            std::cout<< "GBuffer error:" << fboStatus << std::endl;
+
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
@@ -92,17 +96,17 @@ public:
         return size;
     }
 
-    void BindTextures(Shader shader)
+    void BindTextures(Shader& shader)
     {
         shader.bind();
-        glActiveTexture(GL_TEXTURE0);
         shader.setUniformInt("gPosition", 0);
+        shader.setUniformInt("gNormal", 1);
+        shader.setUniformInt("gAlbedoSpec", 2);
+        glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, gPosition);
         glActiveTexture(GL_TEXTURE0 + 1);
-        shader.setUniformInt("gNormal", 1);
         glBindTexture(GL_TEXTURE_2D, gNormal);
         glActiveTexture(GL_TEXTURE0 + 2);
-        shader.setUniformInt("gAlbedoSpec", 2);
         glBindTexture(GL_TEXTURE_2D, gAlbedoSpec);
         shader.unbind();
     }

@@ -21,7 +21,7 @@ public:
         }
     }
 
-    void RenderWithShader(Transform transform, Shader shader)
+    void RenderWithShader(Transform transform, Shader& shader)
     {
         if (enabled)
         {
@@ -29,7 +29,7 @@ public:
         }
     }
 
-    void RenderLightsOnly(Transform transform, Shader shader)
+    void RenderLightsOnly(Transform transform, Shader& shader)
     {
         if (enabled)
         {

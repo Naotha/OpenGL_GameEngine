@@ -24,7 +24,7 @@ public:
         }
     }
 
-    void RenderWithShader(Transform transform, Shader shader) override
+    void RenderWithShader(Transform transform, Shader& shader) override
     {
         if (enabled)
         {

@@ -81,7 +81,7 @@ void main()
     result += CalculateSpotLight(u_spotLights[i], deferredFragPos, norm, viewDir, diffuseMapValues, specularMapValue);
 
     //fragCol = vec4(result, 1.0f);
-    fragCol = vec4(diffuseMapValues, 1.0f);
+    fragCol = vec4(vec3(vertTexCoord, 1.0f), 1.0f);
 }
 
 vec3 CalculateDirLight(DirectionalLight light, vec3 normal, vec3 viewDir, vec3 diffuseMapValues, float specularMapValue)
