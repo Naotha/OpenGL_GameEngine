@@ -23,6 +23,12 @@ public:
         glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_STATIC_DRAW);
     }
 
+    void SetData(std::vector<Vertex> vertices)
+    {
+        glBindBuffer(GL_ARRAY_BUFFER, ID);
+        glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_STATIC_DRAW);
+    }
+
     void bind() { glBindBuffer(GL_ARRAY_BUFFER, ID); }
     void unbind() { glBindBuffer(GL_ARRAY_BUFFER, 0); }
     void deleteVBO() { glDeleteBuffers(1, &ID); }

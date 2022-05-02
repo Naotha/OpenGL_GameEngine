@@ -13,8 +13,8 @@ void OpenGLContext::Init(GLFWwindow *glfwWindow)
     }
 
     /* GL Enable */
-    glEnable(GL_CULL_FACE);
-    glEnable(GL_BLEND);
+    //glEnable(GL_CULL_FACE);
+    //glEnable(GL_BLEND);
     glEnable(GL_DEPTH_TEST);
 }
 

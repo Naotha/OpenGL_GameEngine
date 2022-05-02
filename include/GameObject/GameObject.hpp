@@ -48,6 +48,22 @@ public:
         }
     }
 
+    void RenderWithShader(Shader& shader)
+    {
+        for (auto component : _components)
+        {
+            component->RenderWithShader(transform, shader);
+        }
+    }
+
+    void RenderLightsOnly(Shader& shader)
+    {
+        for (auto component : _components)
+        {
+            component->RenderLightsOnly(transform, shader);
+        }
+    }
+
     void SetPosition(glm::vec3 newPosition)
     {
         transform.SetPosition(newPosition);

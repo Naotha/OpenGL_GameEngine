@@ -24,6 +24,22 @@ public:
         }
     }
 
+    void RenderWithShader(Shader& shader)
+    {
+        for (auto gameObject : _gameObjects)
+        {
+            gameObject->RenderWithShader(shader);
+        }
+    }
+
+    void RenderLightsOnly(Shader& shader)
+    {
+        for (auto gameObject : _gameObjects)
+        {
+            gameObject->RenderLightsOnly(shader);
+        }
+    }
+
     GameObject* CreateGameObject()
     {
         auto gameObject = new GameObject();

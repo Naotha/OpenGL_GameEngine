@@ -10,7 +10,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 2
-# map_Bump -bm 0.000000 old_treetop_N.jpeg
+# map_Bump old_treetop_N.jpeg
 # map_Kd old_treetop_C.png
 
 newmtl Material.002
@@ -22,7 +22,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 2
-# map_Bump -bm 0.000000 old_trunk_N.png
+# map_Bump old_trunk_N.png
 # map_Kd old_trunk_C.png
 
 newmtl Material.003
@@ -34,7 +34,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 2
-# map_Bump -bm 0.000000 old_treetop_N.jpeg
+# map_Bump old_treetop_N.jpeg
 # map_Kd old_treetop_C.png
 # map_Ks old_treetop_M.png
 
@@ -47,7 +47,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 2
-# map_Bump -bm 0.000000 old_treetop_N.jpeg
+# map_Bump old_treetop_N.jpeg
 # map_Kd old_treetop_C.png
 # map_Ks old_treetop_M.png
 
@@ -60,7 +60,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 2
-# map_Bump -bm 0.000000 old_treetop_N.jpeg
+# map_Bump old_treetop_N.jpeg
 # map_Kd old_treetop_C.png
 # map_Ks old_treetop_M.png
 
@@ -73,7 +73,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 2
-# map_Bump -bm 0.000000 old_treetop_N.jpeg
+# map_Bump old_treetop_N.jpeg
 # map_Kd old_treetop_C.png
 # map_Ks old_treetop_M.png
 
@@ -86,7 +86,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 2
-# map_Bump -bm 0.000000 old_treetop_N.jpeg
+# map_Bump old_treetop_N.jpeg
 # map_Kd old_treetop_C.png
 # map_Ks old_treetop_M.png
 
@@ -99,6 +99,6 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 2
-# map_Bump -bm 0.000000 old_treetop_N.jpeg
+# map_Bump old_treetop_N.jpeg
 # map_Kd old_treetop_C.png
 # map_Ks old_treetop_M.png
