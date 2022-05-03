@@ -66,7 +66,7 @@ public:
         }
     }
 
-    void RenderWithShader(Transform transform, Shader shader)
+    void RenderWithShader(Transform transform, Shader& shader)
     {
         if (enabled)
         {
@@ -74,7 +74,7 @@ public:
         }
     }
 
-    void RenderLightsOnly(Transform transform, Shader shader)
+    void RenderLightsOnly(Transform transform, Shader& shader)
     {
         if (enabled)
         {
@@ -110,12 +110,12 @@ public:
         light.setLightInShader("u_spotLights["+ std::to_string(shaderIndex) +"]", shader);
     }
 
-    void RenderWithShader(Transform transform, Shader shader)
+    void RenderWithShader(Transform transform, Shader& shader)
     {
         light.setLightInShader("u_spotLights["+ std::to_string(shaderIndex) +"]", shader);
     }
 
-    void RenderLightsOnly(Transform transform, Shader shader)
+    void RenderLightsOnly(Transform transform, Shader& shader)
     {
         light.setLightInShader("u_spotLights["+ std::to_string(shaderIndex) +"]", shader);
     }

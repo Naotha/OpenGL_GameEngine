@@ -102,7 +102,7 @@ private:
     Shader defaultLightingPassShader;
     Shader shadowShader;
     Shader shadowTest;
-    std::vector<Shader*> activeShaders;
+    std::vector<Shader*> activeShaders = {&defaultLightingPassShader, &defaultGeometryPassShader};
 
     float deltaTime = 0.0f;
     float lastFrameTime = 0.0f;
@@ -132,7 +132,6 @@ void Renderer::Init(Camera* mainCamera, Scene* mainScene, glm::vec2& viewportSiz
     mainFBO.resize(viewportSize.x, viewportSize.y);
     gBuffer.resize(viewportSize.x, viewportSize.y);
     view = mainCamera->getViewMatrix();
-    InitGBufferQuad();
 }
 
 void Renderer::PreRender() {
@@ -148,19 +147,14 @@ void Renderer::PreRender() {
         gBuffer.bind();
         glViewport(0, 0, viewportSize.x, viewportSize.y);
 
-        glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        defaultGeometryPassShader.setUniformMat4("u_vp", vp);
-
-        defaultLightingPassShader.setUniformFloat3("u_viewPos", mainCamera->position);
-        defaultLightingPassShader.setUniformInt("u_pointLightsNum", pointLightCount);
-        defaultLightingPassShader.setUniformInt("u_spotLightsNum", spotLightCount);
     }
     else if (shadowRendering)
     {
         shadowMap.bind();
         glViewport(0, 0, shadowMap.GetSize().x, shadowMap.GetSize().y);
+
         glClear(GL_DEPTH_BUFFER_BIT);
         shadowMap.SetShadowUniforms(defaultLightingPassShader);
     }
@@ -190,24 +184,15 @@ void Renderer::Render()
 
     if (deferredRendering)
     {
-        mainFBO.bind();
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         mainScene->RenderWithShader(defaultGeometryPassShader);
-        //RenderGBufferQuad(defaultLightingPassShader);
-        //gBuffer.unbind();
-//        gBuffer.bind();
-//        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-//        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-//        mainScene->RenderWithShader(defaultGeometryPassShader);
-//        gBuffer.unbind();
-//
-//        mainFBO.bind();
-//        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-//        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-//        gBuffer.BindTextures(defaultLightingPassShader);
-//        mainScene->RenderLightsOnly(defaultLightingPassShader);
-//
-//        RenderGBufferQuad(defaultLightingPassShader);
+
+        mainFBO.bind();
+        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        gBuffer.BindTextures(defaultLightingPassShader);
+        mainScene->RenderLightsOnly(defaultLightingPassShader);
+
+        RenderGBufferQuad(defaultLightingPassShader);
     }
     else
     {
