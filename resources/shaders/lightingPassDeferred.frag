@@ -69,19 +69,18 @@ void main()
     float specularMapValue = (texture(gAlbedoSpec, vertTexCoord)).a;
 
     // Light calculations
-    vec3 norm = deferredNormal;
+    vec3 norm = normalize(deferredNormal);
     vec3 viewDir = normalize(u_viewPos - deferredFragPos);
     // Directional Lighting
     vec3 result = CalculateDirLight(u_dirLight, norm, viewDir, diffuseMapValues, specularMapValue);
     // Point Lights
     for (int i = 0; i < u_pointLightsNum; i++)
-    result += CalculatePointLight(u_pointLights[i], deferredFragPos, norm, viewDir, diffuseMapValues, specularMapValue);
+        result += CalculatePointLight(u_pointLights[i], deferredFragPos, norm, viewDir, diffuseMapValues, specularMapValue);
     // Spot Lights
-    for (int i = 0; i < u_spotLightsNum; i++)
-    result += CalculateSpotLight(u_spotLights[i], deferredFragPos, norm, viewDir, diffuseMapValues, specularMapValue);
-
-    //fragCol = vec4(result, 1.0f);
-    fragCol = vec4(vec3(vertTexCoord, 1.0f), 1.0f);
+    /*for (int i = 0; i < u_spotLightsNum; i++)
+        result += CalculateSpotLight(u_spotLights[i], deferredFragPos, norm, viewDir, diffuseMapValues, specularMapValue);
+    */
+    fragCol = vec4(result, 1.0f);
 }
 
 vec3 CalculateDirLight(DirectionalLight light, vec3 normal, vec3 viewDir, vec3 diffuseMapValues, float specularMapValue)
@@ -97,7 +96,7 @@ vec3 CalculateDirLight(DirectionalLight light, vec3 normal, vec3 viewDir, vec3 d
     vec3 specular = vec3(0.0f);
     if (diff > 0.0f)
     {
-        float spec = pow(clamp(dot(viewDir, reflectDir), 0.0f, 1.0f), 12.0f);
+        float spec = pow(clamp(dot(viewDir, reflectDir), 0.0f, 1.0f), 32.0f);
         specular = (specularMapValue * spec) * light.specular;
     }
 
@@ -117,7 +116,7 @@ vec3 CalculatePointLight(PointLight light, vec3 position, vec3 normal, vec3 view
     vec3 specular = vec3(0.0f);
     if (diff > 0.0f)
     {
-        float spec = pow(clamp(dot(viewDir, reflectDir), 0.0f, 1.0f), 12.0f);
+        float spec = pow(clamp(dot(viewDir, reflectDir), 0.0f, 1.0f), 32.0f);
         specular = (specularMapValue * spec) * light.specular;
     }
     // Attenuation
@@ -143,7 +142,7 @@ vec3 CalculateSpotLight(SpotLight light, vec3 position, vec3 normal, vec3 viewDi
     vec3 specular = vec3(0.0f);
     if (diff > 0.0f)
     {
-        float spec = pow(clamp(dot(viewDir, reflectDir), 0.0f, 1.0f), 12.0f);
+        float spec = pow(clamp(dot(viewDir, reflectDir), 0.0f, 1.0f), 32.0f);
         specular = (specularMapValue * spec) * light.specular;
     }
     // Attenuation
