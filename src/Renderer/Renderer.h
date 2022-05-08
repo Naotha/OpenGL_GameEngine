@@ -154,6 +154,7 @@ void Renderer::PreRender() {
     {
         shadowMap.bind();
         glViewport(0, 0, shadowMap.GetSize().x, shadowMap.GetSize().y);
+
         glClear(GL_DEPTH_BUFFER_BIT);
         shadowMap.SetShadowUniforms(defaultLightingPassShader);
     }
@@ -183,6 +184,7 @@ void Renderer::Render()
 
     if (deferredRendering)
     {
+<<<<<<< HEAD
         gBuffer.bind();
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -192,6 +194,13 @@ void Renderer::Render()
         mainFBO.bind();
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+=======
+        mainScene->RenderWithShader(defaultGeometryPassShader);
+
+        mainFBO.bind();
+        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+>>>>>>> 7d6e52e (Deferred rendering debbugging progress)
         gBuffer.BindTextures(defaultLightingPassShader);
         mainScene->RenderLightsOnly(defaultLightingPassShader);
 

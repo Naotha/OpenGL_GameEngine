@@ -77,9 +77,15 @@ void main()
     for (int i = 0; i < u_pointLightsNum; i++)
         result += CalculatePointLight(u_pointLights[i], deferredFragPos, norm, viewDir, diffuseMapValues, specularMapValue);
     // Spot Lights
+<<<<<<< HEAD
     /*for (int i = 0; i < u_spotLightsNum; i++)
         result += CalculateSpotLight(u_spotLights[i], deferredFragPos, norm, viewDir, diffuseMapValues, specularMapValue);
     */
+=======
+    for (int i = 0; i < u_spotLightsNum; i++)
+        result += CalculateSpotLight(u_spotLights[i], deferredFragPos, norm, viewDir, diffuseMapValues, specularMapValue);
+
+>>>>>>> 7d6e52e (Deferred rendering debbugging progress)
     fragCol = vec4(result, 1.0f);
 }
 

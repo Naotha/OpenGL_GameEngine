@@ -24,5 +24,9 @@ void main()
     gPosition = vec4(vertFragPos, 1.0f);
     gNormal = vec4((normalize(vertNorm)), 1.0f);
     gAlbedoSpec.rgb = texture(u_material.texture_diffuse1, vertTexCoord).rgb;
+<<<<<<< HEAD
     gAlbedoSpec.a = texture(u_material.texture_specular1, vertTexCoord).r;
+=======
+    gAlbedoSpec.a = texture(u_material.texture_diffuse1, vertTexCoord).r;
+>>>>>>> 7d6e52e (Deferred rendering debbugging progress)
 }

@@ -87,7 +87,8 @@ void main()
     // Map values
     vec3 diffuseMapValues = (texture(u_material.texture_diffuse1, vertTexCoord)).rgb;
     vec3 specularMapValues = (texture(u_material.texture_specular1, vertTexCoord)).rgb;
-    
+    specularMapValues = vec3(diffuseMapValues.r);
+
     // Light calculations
     vec3 norm = normalize(vertNorm);
     vec3 viewDir = normalize(u_viewPos - vertFragPos);
