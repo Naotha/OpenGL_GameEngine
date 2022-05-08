@@ -56,22 +56,22 @@ private:
         lastFrameTime = currentFrame;
     }
 
-    void InitGBufferQuad()
+    void InitScreenQuad()
     {
-        gBufferQuadVAO.bind();
-        gBufferQuadVBO.SetData(gBufferQuadVertices);
-        gBufferQuadVAO.linkAttribPointer(gBufferQuadVBO, 0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
-        gBufferQuadVAO.linkAttribPointer(gBufferQuadVBO, 1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
-        gBufferQuadVAO.linkAttribPointer(gBufferQuadVBO, 2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, texCoord));
-        gBufferQuadVAO.unbind();
+        screenQuadVAO.bind();
+        screenQuadVBO.SetData(screenQuadVertices);
+        screenQuadVAO.linkAttribPointer(screenQuadVBO, 0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
+        screenQuadVAO.linkAttribPointer(screenQuadVBO, 1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
+        screenQuadVAO.linkAttribPointer(screenQuadVBO, 2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, texCoord));
+        screenQuadVAO.unbind();
     }
 
-    void RenderGBufferQuad(Shader shader)
+    void RenderScreenQuad(Shader shader)
     {
         shader.bind();
-        gBufferQuadVAO.bind();
+        screenQuadVAO.bind();
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-        gBufferQuadVAO.unbind();
+        screenQuadVAO.unbind();
         shader.unbind();
     }
 
@@ -79,9 +79,9 @@ private:
     glm::vec2 viewportSize;
     FBO mainFBO;
     GBuffer gBuffer;
-    VAO gBufferQuadVAO;
-    VBO gBufferQuadVBO;
-    std::vector<Vertex> gBufferQuadVertices = {
+    VAO screenQuadVAO;
+    VBO screenQuadVBO;
+    std::vector<Vertex> screenQuadVertices = {
             {{-1.0f,  1.0f, 0.0f}, {0.0f,  0.0f, 0.0f}, {0.0f, 1.0f}},
             {{-1.0f, -1.0f, 0.0f}, {0.0f,  0.0f, 0.0f}, {0.0f, 0.0f}},
             {{1.0f,  1.0f, 0.0f}, {0.0f,  0.0f, 0.0f}, {1.0f, 1.0f}},
@@ -191,8 +191,7 @@ void Renderer::Render()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         gBuffer.BindTextures(defaultLightingPassShader);
         mainScene->RenderLightsOnly(defaultLightingPassShader);
-
-        RenderGBufferQuad(defaultLightingPassShader);
+        RenderScreenQuad(defaultLightingPassShader);
     }
     else
     {
@@ -205,10 +204,10 @@ void Renderer::Render()
             glViewport(0, 0, viewportSize.x, viewportSize.y);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             shadowMap.SetShadowMapInShader(shadowTest);
-            RenderGBufferQuad(shadowTest);
+            RenderScreenQuad(shadowTest);
         }
-//        mainFBO.bind();
-//        mainScene->Render();
+        //mainFBO.bind();
+        //mainScene->Render();
     }
 }
 
@@ -228,13 +227,13 @@ void Renderer::SetViewportSize(glm::vec2& viewportSize) {
     this->viewportSize = viewportSize;
 }
 
-Renderer::Renderer() : mainFBO(1280, 720), gBufferQuadVBO(gBufferQuadVertices),
-defaultGeometryPassShader("./resources/shaders/geometryPassDeferred.vert", "./resources/shaders/geometryPassDeferred.frag"),
-defaultLightingPassShader("./resources/shaders/lightingPassDeferred.vert", "./resources/shaders/lightingPassDeferred.frag"),
-shadowShader("./resources/shaders/shadow.vert", "./resources/shaders/shadow.frag"),
-shadowTest("./resources/shaders/lightingPassDeferred.vert", "./resources/shaders/shadowTest.frag")
+Renderer::Renderer() : mainFBO(1280, 720), screenQuadVBO(screenQuadVertices),
+                       defaultGeometryPassShader("./resources/shaders/geometryPassDeferred.vert", "./resources/shaders/geometryPassDeferred.frag"),
+                       defaultLightingPassShader("./resources/shaders/lightingPassDeferred.vert", "./resources/shaders/lightingPassDeferred.frag"),
+                       shadowShader("./resources/shaders/shadow.vert", "./resources/shaders/shadow.frag"),
+                       shadowTest("./resources/shaders/lightingPassDeferred.vert", "./resources/shaders/shadowTest.frag")
 {
-    InitGBufferQuad();
+    InitScreenQuad();
 };
 
 #endif //OPENGL_GAMEENGINE_RENDERER_H
