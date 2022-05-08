@@ -12,24 +12,28 @@ class ShadowMap
 {
 public:
     unsigned int ID;
-    unsigned int depthMap;
+    unsigned int shadowMap;
 
-    ShadowMap() : ShadowMap(1024, 1024) {};
+    ShadowMap() : ShadowMap(2048, 2048) {};
 
     ShadowMap(int width, int height)
     {
+        lightProjection = glm::ortho(-75.0f, 75.0f, -75.0f, 75.0f, 0.1f, 300.0f);
+        lightView = glm::lookAt(glm::vec3(100.0f, 100.0f, 100.0f), glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
+        lightVP = lightProjection * lightView;
+
         size = glm::vec2(width, height);
         glGenFramebuffers(1, &ID);
         glBindFramebuffer(GL_FRAMEBUFFER, ID);
 
-        glGenTextures(1, &depthMap);
-        glBindTexture(GL_TEXTURE_2D, depthMap);
+        glGenTextures(1, &shadowMap);
+        glBindTexture(GL_TEXTURE_2D, shadowMap);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, shadowMap, 0);
         glDrawBuffer(GL_NONE);
         glReadBuffer(GL_NONE);
 
@@ -45,8 +49,8 @@ public:
         size = glm::vec2(width, height);
         glBindFramebuffer(GL_FRAMEBUFFER, ID);
 
-        glGenTextures(1, &depthMap);
-        glBindTexture(GL_TEXTURE_2D, depthMap);
+        glGenTextures(1, &shadowMap);
+        glBindTexture(GL_TEXTURE_2D, shadowMap);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 
         glBindFramebuffer(GL_FRAMEBUFFER,0);
@@ -60,16 +64,16 @@ public:
     void SetShadowUniforms(Shader& shader)
     {
         shader.bind();
-        shader.setUniformMat4("u_lightSpaceMatrix", lightSpaceMatrix);
+        shader.setUniformMat4("u_lightVP", lightVP);
         shader.unbind();
     }
 
     void SetShadowMapInShader(Shader& shader)
     {
         shader.bind();
-        glActiveTexture(GL_TEXTURE0);
-        shader.setUniformInt("depthMap", 0);
-        glBindTexture(GL_TEXTURE_2D, depthMap);
+        shader.setUniformInt("shadowMap", 3);
+        glActiveTexture(GL_TEXTURE0 + 3);
+        glBindTexture(GL_TEXTURE_2D, shadowMap);
         shader.unbind();
     }
 
@@ -82,9 +86,9 @@ private:
 
     float nearPlane = 1.0f;
     float farPlane = 100.0f;
-    glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, nearPlane, farPlane);
-    glm::mat4 lightView = glm::lookAt(glm::vec3(-1.0f, -1.0f, -1.0f), glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
-    glm::mat4 lightSpaceMatrix = lightProjection * lightView;
+    glm::mat4 lightProjection;
+    glm::mat4 lightView;
+    glm::mat4 lightVP;
 };
 
 #endif //OPENGL_GAMEENGINE_SHADOWMAP_HPP

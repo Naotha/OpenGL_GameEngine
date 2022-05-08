@@ -102,13 +102,13 @@ private:
     Shader defaultLightingPassShader;
     Shader shadowShader;
     Shader shadowTest;
-    std::vector<Shader*> activeShaders = {&defaultLightingPassShader, &defaultGeometryPassShader};
+    std::vector<Shader*> activeShaders = {&defaultLightingPassShader, &defaultGeometryPassShader, &shadowShader, &shadowTest};
 
     float deltaTime = 0.0f;
     float lastFrameTime = 0.0f;
 
     bool deferredRendering = true;
-    bool shadowRendering = false;
+    bool shadowRendering = true;
 };
 
 Renderer* Renderer::instance = nullptr;
@@ -156,7 +156,7 @@ void Renderer::PreRender() {
         glViewport(0, 0, shadowMap.GetSize().x, shadowMap.GetSize().y);
 
         glClear(GL_DEPTH_BUFFER_BIT);
-        shadowMap.SetShadowUniforms(defaultLightingPassShader);
+        shadowMap.SetShadowUniforms(shadowShader);
     }
     else
     {
@@ -184,30 +184,39 @@ void Renderer::Render()
 
     if (deferredRendering)
     {
+        gBuffer.bind();
+        glViewport(0, 0, viewportSize.x, viewportSize.y);
+
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         mainScene->RenderWithShader(defaultGeometryPassShader);
 
+        if (shadowRendering)
+        {
+            shadowMap.bind();
+            glViewport(0, 0, shadowMap.GetSize().x, shadowMap.GetSize().y);
+
+            glClear(GL_DEPTH_BUFFER_BIT);
+            glCullFace(GL_FRONT);
+            shadowMap.SetShadowUniforms(shadowShader);
+            mainScene->RenderWithShader(shadowShader);
+            glCullFace(GL_BACK);
+        }
+
         mainFBO.bind();
+        glViewport(0, 0, viewportSize.x, viewportSize.y);
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         gBuffer.BindTextures(defaultLightingPassShader);
+        shadowMap.SetShadowUniforms(defaultLightingPassShader);
+        shadowMap.SetShadowMapInShader(defaultLightingPassShader);
         mainScene->RenderLightsOnly(defaultLightingPassShader);
         RenderScreenQuad(defaultLightingPassShader);
     }
     else
     {
-        if (shadowRendering)
-        {
-            mainScene->RenderWithShader(shadowShader);
-            shadowMap.unbind();
-
-            mainFBO.bind();
-            glViewport(0, 0, viewportSize.x, viewportSize.y);
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            shadowMap.SetShadowMapInShader(shadowTest);
-            RenderScreenQuad(shadowTest);
-        }
-        //mainFBO.bind();
-        //mainScene->Render();
+        mainFBO.bind();
+        mainScene->Render();
     }
 }
 

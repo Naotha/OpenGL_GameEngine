@@ -50,6 +50,7 @@ public:
     Camera camera;
 
     bool spotLightOn;
+    bool shibaMove;
     SpotLightRenderer* spotLightRenderer;
 
     Scene scene;
@@ -78,6 +79,7 @@ public:
         firstMouse = true;
         cameraMode = false;
         spotLightOn = false;
+        shibaMove = true;
         sceneFBO = renderer->GetFBO();
         sceneFBO.resize(window.GetWidth(), window.GetHeight());
     };
@@ -163,6 +165,10 @@ public:
             {
                 spotLightRenderer->Disable();
             }
+        }
+        if (key == GLFW_KEY_Q && action == GLFW_PRESS)
+        {
+            shibaMove = !shibaMove;
         }
     }
 
@@ -293,11 +299,14 @@ public:
 
     void OnLoop() override
     {
-        for (int i = 0; i < shibas.size(); i++)
+        if (shibaMove)
         {
-            glm::mat4 sinTranslation = glm::mat4(1.0f);
-            sinTranslation = glm::translate(sinTranslation, glm::vec3(0.0f, 0.0f, glm::sin(float(glfwGetTime()) - float(i)) * 10.0f));
-            shibas[i]->transform.CalculateModelMatrix(sinTranslation);
+            for (int i = 0; i < shibas.size(); i++)
+            {
+                glm::mat4 sinTranslation = glm::mat4(1.0f);
+                sinTranslation = glm::translate(sinTranslation, glm::vec3(0.0f, 0.0f, glm::sin(float(glfwGetTime()) - float(i)) * 10.0f));
+                shibas[i]->transform.CalculateModelMatrix(sinTranslation);
+            }
         }
 
         /// LOGIC
