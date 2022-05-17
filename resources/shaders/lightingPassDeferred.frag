@@ -39,7 +39,8 @@ struct SpotLight
 };
 
 uniform vec3 u_viewPos;
-uniform mat4 u_lightVP;
+#define SHADOW_MAPS_NUM 1
+uniform mat4 u_lightVP[SHADOW_MAPS_NUM];
 
 uniform DirectionalLight u_dirLight;
 #define POINT_LIGHT_NUM 8
@@ -52,7 +53,7 @@ uniform SpotLight u_spotLights[SPOT_LIGHT_NUM];
 uniform sampler2D gPosition;
 uniform sampler2D gNormal;
 uniform sampler2D gAlbedoSpec;
-uniform sampler2D shadowMap;
+uniform sampler2D shadowMaps[SHADOW_MAPS_NUM];
 
 in vec2 vertTexCoord;
 
@@ -102,7 +103,7 @@ vec3 CalculateDirLight(DirectionalLight light, vec3 position, vec3 normal, vec3 
         float spec = pow(clamp(dot(viewDir, reflectDir), 0.0f, 1.0f), 32.0f);
         specular = spec * light.specular;
     }
-    float shadow = CalculateShadow(u_lightVP * vec4(position, 1.0), NdotL);
+    float shadow = CalculateShadow(u_lightVP[0] * vec4(position, 1.0), NdotL);
 
     return (ambient + (1.0 - shadow) * (diffuse + specular)) * diffuseMapValues;
 }
@@ -167,7 +168,7 @@ float CalculateShadow(vec4 lightSpacePosition, float NdotL)
 {
     vec3 projCoords = lightSpacePosition.xyz / lightSpacePosition.w;
     projCoords = projCoords * 0.5 + 0.5;
-    float lightDepth = texture(shadowMap, projCoords.xy).r;
+    float lightDepth = texture(shadowMaps[0], projCoords.xy).r;
     if (lightDepth == 0.0)
     {
         return 0.0;

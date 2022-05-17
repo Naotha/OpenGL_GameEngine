@@ -7,6 +7,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include "Engine/shader.hpp"
+#include <string>
 
 class ShadowMap
 {
@@ -14,12 +15,15 @@ public:
     unsigned int ID;
     unsigned int shadowMap;
 
-    ShadowMap() : ShadowMap(2048, 2048) {};
+    ShadowMap() : ShadowMap(2048, 2048, glm::vec3(0.0, 0.0, 0.0), 150.0f, 1.0f, 300.f) {};
 
-    ShadowMap(int width, int height)
+    ShadowMap(int width, int height, glm::vec3 lightPos, float projectionSize, float nearPlane, float farPlane)
     {
-        lightProjection = glm::ortho(-75.0f, 75.0f, -75.0f, 75.0f, 0.1f, 300.0f);
-        lightView = glm::lookAt(glm::vec3(100.0f, 100.0f, 100.0f), glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
+        this->nearPlane = nearPlane;
+        this->farPlane = farPlane;
+        float projectionSizeHalf = projectionSize / 2.0f;
+        lightProjection = glm::ortho(-projectionSizeHalf, projectionSizeHalf, -projectionSizeHalf, projectionSizeHalf, nearPlane, farPlane);
+        lightView = glm::lookAt(lightPos, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
         lightVP = lightProjection * lightView;
 
         size = glm::vec2(width, height);
@@ -68,11 +72,18 @@ public:
         shader.unbind();
     }
 
-    void SetShadowMapInShader(Shader& shader)
+    void SetShadowUniforms(Shader& shader, int shadowMapIndex)
     {
         shader.bind();
-        shader.setUniformInt("shadowMap", 3);
-        glActiveTexture(GL_TEXTURE0 + 3);
+        shader.setUniformMat4(("u_lightVP["+ std::to_string(shadowMapIndex) +"]").c_str(), lightVP);
+        shader.unbind();
+    }
+
+    void SetShadowMapInShader(Shader& shader, int shadowMapIndex)
+    {
+        shader.bind();
+        shader.setUniformInt(("shadowMaps["+ std::to_string(shadowMapIndex) +"]").c_str(), 3 + shadowMapIndex);
+        glActiveTexture(GL_TEXTURE0 + 3 + shadowMapIndex);
         glBindTexture(GL_TEXTURE_2D, shadowMap);
         shader.unbind();
     }
@@ -84,8 +95,8 @@ public:
 private:
     glm::vec2 size;
 
-    float nearPlane = 1.0f;
-    float farPlane = 100.0f;
+    float nearPlane;
+    float farPlane;
     glm::mat4 lightProjection;
     glm::mat4 lightView;
     glm::mat4 lightVP;

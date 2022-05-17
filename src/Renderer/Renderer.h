@@ -46,6 +46,12 @@ public:
         }
     }
 
+    void AddShadowMap(DirectionalLight& light,  float projectionSize, float nearPlane = 0.1f, float farPlane = 300.0f)
+    {
+        ShadowMap shadowMap(2048, 2048, -light.getDirection(), projectionSize, nearPlane, farPlane);
+        shadowMaps.push_back(shadowMap);
+    }
+
 private:
     Renderer();
 
@@ -88,8 +94,6 @@ private:
             {{1.0f, -1.0f, 0.0f}, {0.0f,  0.0f, 0.0f}, {1.0f, 0.0f}}
     };
 
-    ShadowMap shadowMap;
-
     glm::mat4 view;
     glm::mat4 projection;
     int pointLightCount = 0;
@@ -103,6 +107,7 @@ private:
     Shader shadowShader;
     Shader shadowTest;
     std::vector<Shader*> activeShaders = {&defaultLightingPassShader, &defaultGeometryPassShader, &shadowShader, &shadowTest};
+    std::vector<ShadowMap> shadowMaps = {};
 
     float deltaTime = 0.0f;
     float lastFrameTime = 0.0f;
@@ -152,11 +157,11 @@ void Renderer::PreRender() {
     }
     else if (shadowRendering)
     {
-        shadowMap.bind();
-        glViewport(0, 0, shadowMap.GetSize().x, shadowMap.GetSize().y);
-
-        glClear(GL_DEPTH_BUFFER_BIT);
-        shadowMap.SetShadowUniforms(shadowShader);
+//        shadowMap.bind();
+//        glViewport(0, 0, shadowMap.GetSize().x, shadowMap.GetSize().y);
+//
+//        glClear(GL_DEPTH_BUFFER_BIT);
+//        shadowMap.SetShadowUniforms(shadowShader);
     }
     else
     {
@@ -193,14 +198,17 @@ void Renderer::Render()
 
         if (shadowRendering)
         {
-            shadowMap.bind();
-            glViewport(0, 0, shadowMap.GetSize().x, shadowMap.GetSize().y);
+            for (auto& shadowMap : shadowMaps)
+            {
+                shadowMap.bind();
+                glViewport(0, 0, shadowMap.GetSize().x, shadowMap.GetSize().y);
 
-            glClear(GL_DEPTH_BUFFER_BIT);
-            glCullFace(GL_FRONT);
-            shadowMap.SetShadowUniforms(shadowShader);
-            mainScene->RenderWithShader(shadowShader);
-            glCullFace(GL_BACK);
+                glClear(GL_DEPTH_BUFFER_BIT);
+                glCullFace(GL_FRONT);
+                shadowMap.SetShadowUniforms(shadowShader);
+                mainScene->RenderWithShader(shadowShader);
+                glCullFace(GL_BACK);
+            }
         }
 
         mainFBO.bind();
@@ -208,8 +216,11 @@ void Renderer::Render()
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         gBuffer.BindTextures(defaultLightingPassShader);
-        shadowMap.SetShadowUniforms(defaultLightingPassShader);
-        shadowMap.SetShadowMapInShader(defaultLightingPassShader);
+        for (int i = 0; i < shadowMaps.size(); i++)
+        {
+            shadowMaps[i].SetShadowUniforms(defaultLightingPassShader, i);
+            shadowMaps[i].SetShadowMapInShader(defaultLightingPassShader, i);
+        }
         mainScene->RenderLightsOnly(defaultLightingPassShader);
         RenderScreenQuad(defaultLightingPassShader);
     }

@@ -208,7 +208,7 @@ public:
         RegisterEvents();
 
         /// Lights
-        glm::vec3 lightPos = glm::vec3(1.0f, 1.0f, 1.0f);
+        glm::vec3 lightPos = glm::vec3(100.0f, 100.0f, 100.0f);
         glm::vec3 lightCol = glm::vec3 (1.0f, 1.0f, 1.0f);
         glm::vec3 ambientCol = lightCol * 0.2f;
         glm::vec3 diffuseCol = lightCol * 0.8f;
@@ -331,7 +331,7 @@ public:
             renderer->DrawToWindow(window);
         }
 
-        //std::cout<<1.0f / renderer->GetDeltaTime()<<std::endl;
+        std::cout<<1.0f / renderer->GetDeltaTime()<<std::endl;
     }
 };
 

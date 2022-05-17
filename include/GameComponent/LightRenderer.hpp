@@ -11,6 +11,7 @@ public:
     {
         enabled = true;
         Renderer::GetInstance()->AddShader(&this->shader);
+        Renderer::GetInstance()->AddShadowMap(light, 150.0f);
     };
 
     void Render(Transform transform)
